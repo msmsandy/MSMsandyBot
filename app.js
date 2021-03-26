@@ -1,7 +1,6 @@
 const Discord = require('discord.js'); 
 const keep_alive = require('./keep_alive.js');
-const moment = require('moment-timezone');
- // time 
+const moment = require('moment-timezone'); // time 
 require('dotenv').config(); 
 
 const client = new Discord.Client(); 
@@ -27,29 +26,42 @@ client.on('message', (message) => {
 	        return parseInt(c[0]) * 60 + parseInt(c[1]);
     	}
 
-    	let errorMessage = 'Dimwit, the command is `!calc HH:MM`'; 
+        function sendError(error) {
+            let errorMessage = 'dimwit, ' + error; 
+            message.channel.send(errorMessage); 
+        }
 
-    	if (args[0] === undefined) {
-    		message.channel.send(errorMessage); 
-    	} else if (args[0].includes(':')) {
-    		let splitTime = args[0].split(':'); 
+        function sendMessage(text) {
+            message.channel.send(text); 
+        }
 
-    		if (!isNaN(splitTime[0]) && !isNaN(splitTime[1])) {
-    			let currentTime = moment().tz('America/Anchorage').format('HH:mm'); 
 
-    			let parsedInputtedTime = parseTime(args[0]); 
-    			let parsedCurrentTime = parseTime(currentTime); 
+    	if (args[0] != undefined && args[0].includes(':')) {
+            let splitTime = args[0].split(':'); 
+            let hour = splitTime[0]
+            let minute = splitTime[1]
 
-    			if (parsedInputtedTime < parsedCurrentTime) {
-    				parsedInputtedTime = parsedInputtedTime + 1440; 
-    			} else {
-    			}
-				let minutes = Math.abs(parsedInputtedTime - parsedCurrentTime); 
+            if (!isNaN(hour) && !isNaN(minute) && hour < 24 && minute < 60) {
+                let currentTime = moment().tz('America/Anchorage').format('HH:mm'); 
 
-				message.reply('Load '+ minutes + ' minutes of AB. You could\'ve calculated that yourself, dimwit.'); 
-    		}
-    	} else {
-    		message.channel.send(errorMessage); 
+                let parsedInputtedTime = parseTime(args[0]); 
+                let parsedCurrentTime = parseTime(currentTime); 
+
+                if (parsedInputtedTime < parsedCurrentTime) {
+                    parsedInputtedTime = parsedInputtedTime + 1440; 
+                } 
+                let minutes = Math.abs(parsedInputtedTime - parsedCurrentTime); 
+
+                message.reply('load '+ minutes + ' minutes of AB. you could\'ve calculated that yourself, dimwit.'); 
+            } else {
+                sendError('that\s not how time works.');
+            }    		
+    	}
+        else if (args[0] == 'help') {
+            sendMessage('tell me when you want to AB until (server time) and i\'ll tell you how much ab to load.\nthe command is: `!calc HH:MM`');
+        }
+        else {
+    		sendError('the command is `!calc HH:MM`.');
     	}
 
     	return; 
