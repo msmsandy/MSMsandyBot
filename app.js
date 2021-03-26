@@ -8,7 +8,7 @@ require('dotenv').config();
 const client = new Discord.Client(); 
 client.commands = new Discord.Collection();
 // prefix 
-const prefix = "$"
+const prefix = "!"
 
 // get commands 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -24,7 +24,7 @@ client.on('ready', () => {
 
 // message 
 client.on('message', (message) => {
-    if (!message.content.startsWith(prefix) || message.author.bot) return; 
+    if (!message.content.startsWith(prefix) || message.author.bot || !message.guild) return; 
 
     const messageArray = message.content.slice(prefix.length).trim().split(/ +/);
 	const command = messageArray[0]; 
