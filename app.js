@@ -1,5 +1,7 @@
 const Discord = require('discord.js'); 
-const moment = require('moment-timezone'); // time 
+const keep_alive = require('./keep_alive.js');
+const moment = require('moment-timezone');
+ // time 
 require('dotenv').config(); 
 
 const client = new Discord.Client(); 
