@@ -18,7 +18,7 @@ const argumentType = {
     // }, 
     end: {
         command: 'end',
-        description: 'end the contest to choose a winner *(please dont use this)*', 
+        description: '**only for sandy\'s use!!!** end the contest to choose a winner', 
     }, 
     // stats: {
     //     command: 'stats',
