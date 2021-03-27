@@ -137,9 +137,6 @@ function end(message) {
 
 function enterContest(guild, user, ign) {
     const entry = { user: user, ign: ign };
-
-    enmap.ensure(guild, [], contestEntriesKey);
-
     // if user already has an entry, remove first 
     const existingEntry = enmap.get(guild, contestEntriesKey).find(entry => entry.user === user); 
     if (existingEntry !== undefined) {

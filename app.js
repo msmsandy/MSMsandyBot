@@ -45,6 +45,7 @@ client.on('message', (message) => {
     console.log("Message: " + message.content);
 
     enmap.ensure(message.guild.id, defaultSettings); 
+    enmap.ensure(message.guild.id, [], 'fameContestEntries');
 
     // console.log(enmap);
 
