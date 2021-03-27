@@ -1,7 +1,6 @@
 const fs = require('fs');
 const Discord = require('discord.js'); 
 const keep_alive = require('./keep_alive.js');
-const moment = require('moment-timezone'); // time 
 const Enmap = require('enmap');
 require('dotenv').config(); 
 

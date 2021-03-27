@@ -1,3 +1,5 @@
+const moment = require('moment');
+const momentTz = require('moment-timezone'); // time 
 module.exports = {
 	name: 'calc', 
 	description: 'calc', 
