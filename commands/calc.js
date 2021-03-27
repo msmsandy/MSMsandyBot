@@ -34,7 +34,7 @@ module.exports = {
                 } 
                 let minutes = Math.abs(parsedInputtedTime - parsedCurrentTime); 
 
-                message.reply('load '+ minutes + ' minutes of AB. you could\'ve calculated that yourself, dimwit.'); 
+                message.reply('to AB to ' + hour + ':' + minute + ', load '+ minutes + ' minutes of AB. you could\'ve calculated that yourself, dimwit.'); 
             } 
             else {
                 sendError('that\s not how time works.');

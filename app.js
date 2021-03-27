@@ -8,7 +8,7 @@ require('dotenv').config();
 const client = new Discord.Client(); 
 client.commands = new Discord.Collection();
 // prefix 
-const prefix = "!"
+const prefix = process.env.DEBUG ? "$" : "!";
 
 // get commands 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -26,23 +26,29 @@ enmap = new Enmap({
 }); 
 
 defaultSettings = {
-    test: 'hi'
-}
+    test: 'hi', 
+    fameSettings: {
+        channel: undefined,
+        endTime: '20:00',
+    }
+};
 
 // ready 
 client.on('ready', () => {
-    console.log('Bot is ready'); 
+    console.log('MSMsandyBot up!'); 
 }); 
 
 // message 
 client.on('message', (message) => {
     if (!message.content.startsWith(prefix) || message.author.bot || !message.guild) return; 
 
+    console.log("Message: " + message.content);
+
     enmap.ensure(message.guild.id, defaultSettings); 
 
     // console.log(enmap);
 
-    const messageArray = message.content.slice(prefix.length).trim().split(/ +/);
+    const messageArray = message.content.toLowerCase().slice(prefix.length).trim().split(/ +/);
 	const command = messageArray[0]; 
 	const args = messageArray.slice(1);
 
@@ -58,6 +64,14 @@ client.on('message', (message) => {
     else if (command === 'whosdabest') {
         client.commands.get('whosdabest').execute(message);
     }
+    // else if (command === 'fame') {
+    //     client.commands.get('fame').execute(message, prefix, args);
+    // }
+
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.log('Unhandled Rejection at:', reason.stack || reason);
 });
 
 // login 
