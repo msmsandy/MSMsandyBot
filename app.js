@@ -28,7 +28,7 @@ enmap = new Enmap({
 defaultSettings = {
     test: 'hi', 
     fameSettings: {
-        channel: undefined,
+        channel: undefined, // channel id 
         endTime: '20:00',
     }
 };
@@ -46,6 +46,7 @@ client.on('message', (message) => {
 
     enmap.ensure(message.guild.id, defaultSettings); 
     enmap.ensure(message.guild.id, [], 'fameContestEntries');
+    enmap.ensure(message.guild.id, [], 'teams');
 
     // console.log(enmap);
 
@@ -67,6 +68,9 @@ client.on('message', (message) => {
     }
     else if (command === 'fame') {
         client.commands.get('fame').execute(message, prefix, args);
+    }
+    else if (command === 'team') {
+        client.commands.get('team').execute(message, prefix, args);
     }
 
 });
