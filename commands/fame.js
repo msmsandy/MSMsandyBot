@@ -44,16 +44,10 @@ function help(message, prefix) {
 }
 
 function view(message) {
-    const entries = enmap.get(message.guild.id, contestEntriesKey); 
-    if (entries.length > 0) {
-        let entriesText = '';
-        for (var i = 0; i < entries.length; i++) {
-            const entry = entries[i]; 
-            entriesText += '\n' + (i + 1) + '. ' + entry.ign;
-        }
-        message.channel.send('current entries: ```' + entriesText + '```');
-    }
-    else {
+    const viewText = viewMessage(message);
+    if (viewText !== undefined) {
+        message.channel.send(viewText);
+    } else {
         message.channel.send('looks like no one has entered yet. higher chance to win if you enter now!');
     }
 }
@@ -72,15 +66,16 @@ function enter(message, ign) {
 
                 if (message.content.toLowerCase() === 'y') {
                         const existingEntryIgn = enterContest(message.guild.id, message.author.id, ign); 
+                        const entriesText = viewMessage(message);
 
                         if (existingEntryIgn === undefined) {
-                            message.reply('entered with `' + ign + '`');
+                            message.reply('entered with `' + ign + '`' + '\n' + entriesText);
                         } 
                         else if (existingEntryIgn === ign) {
-                            message.reply('you already entered, dum dum'); 
+                            message.reply('you already entered, dum dum' + '\n' + entriesText); 
                         } 
                         else {
-                            message.reply('you already entered with `' + existingEntryIgn + '`. updated your entry with `' + ign + '`.');
+                            message.reply('you already entered with `' + existingEntryIgn + '`. updated your entry with `' + ign + '`.' + '\n' + entriesText);
                         }
                     }
                     else if (message.content.toLowerCase() === 'n') {
@@ -103,11 +98,12 @@ function enter(message, ign) {
 function dropout(message) {
     // remove userid from db 
     const ign = dropoutContest(message.guild.id, message.author.id); 
-    console.log(enmap.get(message.guild.id, contestEntriesKey));
+    const entriesText = viewMessage(message);
+    // console.log(enmap.get(message.guild.id, contestEntriesKey));
     if (ign === undefined) {
-        message.reply('you were not entered in the contest, loser');
+        message.reply('you were not entered in the contest, loser' + '\n' + entriesText);
     } else {
-        message.reply('you haved dropped out with `' + ign + '`');
+        message.reply('you haved dropped out with `' + ign + '`' + '\n' + entriesText);
     }
 }
 
@@ -115,6 +111,7 @@ function end(message) {
     const entries = enmap.get(message.guild.id, contestEntriesKey);
 
     if (entries.length >= 2) {
+        const entriesText = viewMessage(message);
         const winningNumber = Math.floor(Math.random() * entries.length); 
         const winningEntry = entries[winningNumber];
         const loserEntries = entries.filter(entry => entry.user !== winningEntry.user ); 
@@ -123,7 +120,7 @@ function end(message) {
         const winnerCharText = 'winning character: `' + winningEntry.ign + '`';
         const loserText = loserEntries.map(entry => '<@' + entry.user + '>').join(', ');
 
-        message.channel.send('the contest has ended. congratulations to the winner. losers, please fame the winner\'s character within 24 hours or suffer the consequences.\n\t' + winnerText + '\n\t' + winnerCharText + '\n\tlosers: ' + loserText);
+        message.channel.send(entriesText + '\nthe contest has ended. congratulations to the winner. losers, please fame the winner\'s character within 24 hours or suffer the consequences.\n\t' + winnerText + '\n\t' + winnerCharText + '\n\tlosers: ' + loserText);
     }
     else {
         message.channel.send('boohoo not enough people entered. everyone loses.');
@@ -134,6 +131,22 @@ function end(message) {
 }
 
 // Model updates 
+
+function viewMessage(message) {
+    const entries = enmap.get(message.guild.id, contestEntriesKey); 
+    // console.log(entries);
+    if (entries.length > 0) {
+        let entriesText = '';
+        for (var i = 0; i < entries.length; i++) {
+            const entry = entries[i]; 
+            entriesText += '\n' + (i + 1) + '. ' + entry.ign;
+        }
+        return 'entries: ```' + entriesText + '```';
+    }
+    else {
+        return undefined;
+    }
+}
 
 function enterContest(guild, user, ign) {
     const entry = { user: user, ign: ign };
