@@ -45,7 +45,7 @@ client.on('message', (message) => {
         client.commands.get('whosdabest').execute(message);
     }
     else if (command === 'fame') {
-        client.commands.get('fame2').execute(message, prefix, args);
+        client.commands.get('fame').execute(message, prefix, args);
     }
 
 });
