@@ -21,6 +21,8 @@ class Database {
 			.catch(err => {
 				console.log('Database connection error' + err);
 			})
+
+		mongoose.set('useFindAndModify', false);
 	}
 
 }
