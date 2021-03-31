@@ -1,3 +1,10 @@
+const { 
+    getFameData, 
+    addOrUpdateFameEntry, 
+    removeFameEntry, 
+    clearFameEntries, 
+} = require('../src/fame');
+
 const argumentType = {
     view: {
         command: 'view', 
@@ -30,8 +37,6 @@ const argumentType = {
     }, 
 }
 
-const contestEntriesKey = 'fameContestEntries';
-
 // Command Handling 
 
 function help(message, prefix) {
@@ -43,143 +48,128 @@ function help(message, prefix) {
     message.channel.send(description + '\n' + commandsString);
 }
 
-function view(message) {
-    const viewText = viewMessage(message);
-    if (viewText !== undefined) {
-        message.channel.send(viewText);
+async function view(message) {
+    const entriesText = await getEntriesText(message.guild.id); 
+    if (entriesText !== undefined) {
+        message.channel.send(entriesText);
     } else {
         message.channel.send('looks like no one has entered yet. higher chance to win if you enter now!');
     }
 }
 
-function enter(message, ign) {
-    if (ign !== undefined) {
-        let filter = m => m.author.id === message.author.id
-        message.reply('by entering, you agree to fame the winner within 24 hours if you lose. do you accept these terms? enter `y` or `n`').then(() => {
-            message.channel.awaitMessages(filter, {
-                max: 1,
-                time: 30000,
-                errors: ['time']
-            })
-            .then(message => {
-                message = message.first(); 
+async function getEntriesText(guildId) {
+    const fameData = await getFameData(guildId);
 
-                if (message.content.toLowerCase() === 'y') {
-                        const existingEntryIgn = enterContest(message.guild.id, message.author.id, ign); 
-                        const entriesText = viewMessage(message);
-
-                        if (existingEntryIgn === undefined) {
-                            message.reply('entered with `' + ign + '`' + '\n' + entriesText);
-                        } 
-                        else if (existingEntryIgn === ign) {
-                            message.reply('you already entered, dum dum' + '\n' + entriesText); 
-                        } 
-                        else {
-                            message.reply('you already entered with `' + existingEntryIgn + '`. updated your entry with `' + ign + '`.' + '\n' + entriesText);
-                        }
-                    }
-                    else if (message.content.toLowerCase() === 'n') {
-                        message.reply('you have not been entered into the contest');
-                    }
-                    else {
-                        message.reply('thats not what i asked for');
-                    }
-                }).catch(collected => {
-                    console.log(collected);
-                    message.reply('you took too long');
-                });
-            });
-    }
-    else {
-        message.reply('u need to provide a character to fame if u win');
-    }
-}
-
-function dropout(message) {
-    // remove userid from db 
-    const ign = dropoutContest(message.guild.id, message.author.id); 
-    const entriesText = viewMessage(message);
-    // console.log(enmap.get(message.guild.id, contestEntriesKey));
-    if (ign === undefined) {
-        message.reply('you were not entered in the contest, loser' + '\n' + entriesText);
-    } else {
-        message.reply('you haved dropped out with `' + ign + '`' + '\n' + entriesText);
-    }
-}
-
-function end(message) {
-    const entries = enmap.get(message.guild.id, contestEntriesKey);
-
-    if (entries.length >= 2) {
-        const entriesText = viewMessage(message);
-        const winningNumber = Math.floor(Math.random() * entries.length); 
-        const winningEntry = entries[winningNumber];
-        const loserEntries = entries.filter(entry => entry.user !== winningEntry.user ); 
-
-        const winnerText = 'winner: <@' + winningEntry.user + '>'; 
-        const winnerCharText = 'winning character: `' + winningEntry.ign + '`';
-        const loserText = loserEntries.map(entry => '<@' + entry.user + '>').join(', ');
-
-        message.channel.send(entriesText + '\nthe contest has ended. congratulations to the winner. losers, please fame the winner\'s character within 24 hours or suffer the consequences.\n\t' + winnerText + '\n\t' + winnerCharText + '\n\tlosers: ' + loserText);
-    }
-    else {
-        message.channel.send('boohoo not enough people entered. everyone loses.');
-    }
-
-    // reset all entries 
-    enmap.set(message.guild.id, [], contestEntriesKey);
-}
-
-// Model updates 
-
-function viewMessage(message) {
-    const entries = enmap.get(message.guild.id, contestEntriesKey); 
-    // console.log(entries);
+    let entries = fameData.entries; 
+    console.log(entries);
     if (entries.length > 0) {
         let entriesText = '';
         for (var i = 0; i < entries.length; i++) {
             const entry = entries[i]; 
-            entriesText += '\n' + (i + 1) + '. ' + entry.ign;
+            entriesText += `\n${i+1}. ${entry.ign}`;
         }
-        return 'entries: ```' + entriesText + '```';
+        console.log(entriesText);
+        return `entries: \`\`\`${entriesText}\`\`\``; 
     }
     else {
         return undefined;
     }
 }
 
-function enterContest(guild, user, ign) {
-    const entry = { user: user, ign: ign };
-    // if user already has an entry, remove first 
-    const existingEntry = enmap.get(guild, contestEntriesKey).find(entry => entry.user === user); 
-    if (existingEntry !== undefined) {
-        enmap.remove(guild, existingEntry, contestEntriesKey);
-        enmap.push(guild, entry, contestEntriesKey);
-        return existingEntry.ign; 
+async function enter(message, ign) {
+    if (ign !== undefined) {
+        let filter = m => m.author.id === message.author.id
+
+        try {
+            await message.reply('by entering, you agree to fame the winner within 24 hours if you lose. do you accept these terms? enter `y` or `n`'); 
+
+            let responseMessage = await message.channel.awaitMessages(filter, {
+                max: 1,
+                time: 30000,
+                errors: ['time']
+            });
+
+            responseMessage = responseMessage.first(); 
+
+            if (responseMessage.content.toLowerCase() === 'y') {
+                const existingEntryIgn = await updateEntries(message, message.author.id, ign);
+                const entriesText = await getEntriesText(message.guild.id);
+                if (existingEntryIgn === undefined) {
+                    message.reply('entered with `' + ign + '`' + '\n' + entriesText);
+                } 
+                else if (existingEntryIgn === ign) {
+                    message.reply('you already entered, dum dum' + '\n' + entriesText); 
+                } 
+                else {
+                    message.reply('you already entered with `' + existingEntryIgn + '`. updated your entry with `' + ign + '`.' + '\n' + entriesText);
+                }
+            }
+            else if (message.content.toLowerCase() === 'n') {
+                message.reply('you have not been entered into the contest');
+            }
+            else {
+                message.reply('thats not what i asked for');
+            }
+        } catch (err) {
+            console.log(err);
+            message.reply('you took too long');
+        }
     }
     else {
-        enmap.push(guild, entry, contestEntriesKey);
-        return undefined; 
+        message.reply('u need to provide a character to fame if u win');
     }
 }
 
-function dropoutContest(guild, user) {
-    const entry = enmap.get(guild, contestEntriesKey).find(entry => entry.user === user); 
-    if (entry !== undefined) {
-        enmap.remove(guild, entry, contestEntriesKey);
-        return entry.ign;
+async function updateEntries(message, user, ign) {
+    const existingEntryIgn = await addOrUpdateFameEntry(message.guild.id, user, ign);
+    return existingEntryIgn; 
+}
+
+async function dropout(message) {
+    const existingEntryIgn = await removeFameEntry(message.guild.id, message.author.id); 
+    const entriesText = await getEntriesText(message.guild.id);
+
+    if (existingEntryIgn === undefined) {
+        message.reply('you were not entered in the contest, loser' + '\n' + entriesText);
+    } else {
+        message.reply('you haved dropped out with `' + existingEntryIgn + '`' + '\n' + entriesText);
     }
-    return undefined; 
+}
+
+async function end(message) {
+    const fameData = await getFameData(message.guild.id);
+    const entries = fameData.entries; 
+    let entriesText = await getEntriesText(message.guild.id); 
+
+    if (entries.length >= 2) {
+
+        const winningNumber = Math.floor(Math.random() * entries.length); 
+        const winningEntry = entries[winningNumber]; 
+        const losingEntries = entries.filter(entry => entry.user !== winningEntry.user); 
+
+        const winnerText = `winner: <@${winningEntry.user}>`;
+        const winnerCharText = `winning character: \`${winningEntry.ign}\``; 
+        const loserText = 'losers: ' + losingEntries.map(entry => `<@${entry.user}>`).join(', ');
+
+        const summaryText = `${entriesText}\nthe contest has ended. congratulations to the winner. losers, please fame the winner's character within 24 hours or suffer the consequences.\n\t${winnerText}\n\t${winnerCharText}\n\t${loserText}`; 
+    }
+    else {
+        entriesText = entriesText ? entriesText : '';
+        message.channel.send(entriesText + '\n boohoo not enough people entered. everyone loses.');
+    }
+
+    await resetEntries(message); 
+}
+
+async function resetEntries(message) {
+    await clearFameEntries(message.guild.id); 
 }
 
 module.exports = {
     name: 'fame', 
     description: 'Popularity contest', 
     execute(message, prefix, args) {
-        console.log('Fame: ' + message.content);
-        console.log(enmap.get(message.guild.id, contestEntriesKey));
-
-        // enmap.set(message.guild.id, [ { user: '0', ign: '0' }, { user: '1', ign: '1' }, { user: '2', ign: '2' }], contestEntriesKey);
+        console.log('Fame2: ' + message.content);
 
         if (args[0] === argumentType.enter.command) {
             enter(message, args[1]);
@@ -191,7 +181,11 @@ module.exports = {
         //     message.channel.send('the contest has been reset');
         // }
         else if (args[0] === argumentType.end.command) {
-            end(message);
+            if (args[1] === 'mynameissandy') {
+                end(message);
+            } else {
+                message.reply('you\'re banned!');
+            }
         }
         // else if (args[0] === argumentType.stats.command) {
         //     message.reply('you have entered X times and won X times');

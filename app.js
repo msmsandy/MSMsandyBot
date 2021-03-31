@@ -17,22 +17,6 @@ for (const file of commandFiles) {
     client.commands.set(command.name, command); 
 }
 
-// database 
-enmap = new Enmap({
-    name: "settings", 
-    fetchAll: true, 
-    autoFetch: true, 
-    cloneLevel: 'deep'
-}); 
-
-defaultSettings = {
-    test: 'hi', 
-    fameSettings: {
-        channel: undefined,
-        endTime: '20:00',
-    }
-};
-
 // ready 
 client.on('ready', () => {
     console.log('MSMsandyBot up!'); 
@@ -43,11 +27,6 @@ client.on('message', (message) => {
     if (!message.content.startsWith(prefix) || message.author.bot || !message.guild) return; 
 
     console.log("Message: " + message.content);
-
-    enmap.ensure(message.guild.id, defaultSettings); 
-    enmap.ensure(message.guild.id, [], 'fameContestEntries');
-
-    // console.log(enmap);
 
     const messageArray = message.content.toLowerCase().slice(prefix.length).trim().split(/ +/);
 	const command = messageArray[0]; 
