@@ -47,6 +47,9 @@ client.on('message', (message) => {
     else if (command === 'fame') {
         client.commands.get('fame').execute(message, prefix, args);
     }
+    // else if (command === 'team') {
+    //     client.commands.get('team').execute(message, prefix, args);
+    // }
 
 });
 

@@ -1,8 +1,11 @@
+const { getDaBestData } = require('../src/dabest');
+
 module.exports = {
 	name: 'whosdabest', 
 	description: 'whosdabest', 
-	execute(message) {
-		let daBest = enmap.get(message.guild.id, 'daBest');
+	async execute(message) {
+		let daBest = (await getDaBestData(message.guild.id)).user; 
+
         if (daBest === undefined) {
             message.channel.send('no one...');
         }
