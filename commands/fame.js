@@ -152,6 +152,7 @@ async function end(message) {
         const loserText = 'losers: ' + losingEntries.map(entry => `<@${entry.user}>`).join(', ');
 
         const summaryText = `${entriesText}\nthe contest has ended. congratulations to the winner. losers, please fame the winner's character within 24 hours or suffer the consequences.\n\t${winnerText}\n\t${winnerCharText}\n\t${loserText}`; 
+        message.channel.send(summaryText);
     }
     else {
         entriesText = entriesText ? entriesText : '';
@@ -183,6 +184,8 @@ module.exports = {
         else if (args[0] === argumentType.end.command) {
             if (args[1] === 'mynameissandy') {
                 end(message);
+
+                message.delete();
             } else {
                 message.reply('you\'re banned!');
             }
