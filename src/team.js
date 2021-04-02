@@ -7,7 +7,7 @@ async function getTeamListData(guildId) {
 	try {
 		const defaultData = Team({ guildId: guildId, teams: [] }); 
 		
-		const data = await Team.findOneAndUpdate(
+		const data = await TeamList.findOneAndUpdate(
 			{ guildId: guildId }, 
 			{ $setOnInsert: defaultData }, 
 			{ upsert: true, new: true, runValidators: true },
@@ -33,7 +33,7 @@ async function getTeam(guildId, teamId) {
 }
 
 // returns existing team if it exists 
-async function addOrUpdateTeam(guildId, teamId: String, name: String, description: String, slots: Number) {
+async function addOrUpdateTeam(guildId, teamId, slots, name, description) {
 	try {
 		const teamList = await getTeamListData(guildId); 
 		
@@ -46,7 +46,7 @@ async function addOrUpdateTeam(guildId, teamId: String, name: String, descriptio
 		}
 		else {
 			const team = Team({
-				id: id, 
+				id: teamId, 
 				name: name, 
 				description: description, 
 				slots: slots, 
@@ -109,10 +109,19 @@ async function checkin(guildId, teamId, user, displayName, signupText) {
 	}
 }
 
-async function checkout(guildId, teamId, user: String) {
+async function checkout(guildId, teamId, user) {
 
 }
 
-async function checkout(guildId, teamId, index: Number) {
+async function checkout(guildId, teamId, index) {
 
+}
+
+module.exports = {
+	getTeamListData, 
+	getTeam, 
+	addOrUpdateTeam, 
+	removeTeam, 
+	checkin, 
+	checkout, 
 }

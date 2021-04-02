@@ -48,13 +48,23 @@ client.on('message', async (message) => {
         else if (command === 'fame') {
             await client.commands.get('fame').execute(message, prefix, args);
         }
-        else if (command === 'team') {
-            await client.commands.get('team').execute(message, prefix, args);
-        }
+        // else if (command === 'team') {
+        //     await client.commands.get('team').execute(message, prefix, args);
+        // }
     } catch (err) {
         console.log(err);
         message.channel.send("Unhandled error: " + err);
     }
+<<<<<<< HEAD
+=======
+    else if (command === 'fame') {
+        client.commands.get('fame').execute(message, prefix, args);
+    }
+    else if (command === 'team') {
+        client.commands.get('team').execute(message, prefix, args);
+    }
+
+>>>>>>> team start
 });
 
 process.on('unhandledRejection', (reason, promise) => {

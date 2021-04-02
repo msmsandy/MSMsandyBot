@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
 
 let CheckinSchema = new mongoose.Schema({
-	user: { type: String, unique: true }, 
+	user: { type: String }, 
 	displayName: { type: String }, 
 	signupText: { type: String }, 
 });
 
 let TeamSchema = new mongoose.Schema({
-	id: { type: String, unique: true }, 
+	id: { type: String }, 
 	name: { type: String }, 
 	description: { type: String },
 	slots: { type: Number }, 
