@@ -2,30 +2,23 @@ const db = require('./database');
 const { FameEntry, Fame } = require('./models/fame'); 
 
 async function getFameData(guildId) {
-	console.log("Getting Fame Data for " + guildId);
-
-	let fameData; 
 	try {
 		let defaultFameData = Fame({ guildId: guildId, entries: [] });
-		fameData = await Fame.findOneAndUpdate(
+		const fameData = await Fame.findOneAndUpdate(
 			{ guildId: guildId }, 
 			{ $setOnInsert: defaultFameData }, 
 			{ upsert: true, new: true, runValidators: true} 
 		); 
-
-		// console.log(fameData);
+		return fameData;
 	} catch (err) {
-		console.error(err);
 		throw err; 
 	}
-
-	return fameData;
 }
 
 // returns existing entry's ign if it already exists 
 async function addOrUpdateFameEntry(guildId, user, ign) {
-	let existingEntryIgn = undefined; 
 	try {
+		let existingEntryIgn = undefined; 
 		const fameData = await getFameData(guildId); 
 		const entries = fameData.entries; 
 
@@ -40,12 +33,11 @@ async function addOrUpdateFameEntry(guildId, user, ign) {
 		}
 
 		const updated = await fameData.save(); 
+
+		return existingEntryIgn; 
 	} catch (err) {
-		console.error(err); 
 		throw err; 
 	}
-
-	return existingEntryIgn; 
 }
 
 async function removeFameEntry(guildId, user) {
@@ -56,16 +48,13 @@ async function removeFameEntry(guildId, user) {
 		if (existingEntryIndex !== -1) {
 			const existingEntry = entries[existingEntryIndex]; 
 			entries.splice(existingEntryIndex, 1); 
-
 			await fameData.save(); 
-
 			return existingEntry.ign;
 		}
 		else {
 			return undefined; 
 		}
 	} catch (err) {
-		console.error(err); 
 		throw err; 
 	}
 }
@@ -76,7 +65,6 @@ async function clearFameEntries(guildId) {
 		fameData.entries = []; 
 		await fameData.save(); 
 	} catch(err) {
-		console.error(err);
 		throw err; 
 	}
 }

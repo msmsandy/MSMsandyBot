@@ -4,7 +4,11 @@ module.exports = {
 	name: 'imnotdabest', 
 	description: 'imnotdabest', 
 	async execute(message) {
-		await setNotDaBest(message.guild.id, message.author.id); 
-		message.reply('ya ur not');
+		try {
+			await setNotDaBest(message.guild.id, message.author.id); 
+			message.reply('ya ur not');
+		} catch (err) {
+			throw err; 
+		}
 	}
 }

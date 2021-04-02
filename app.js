@@ -1,12 +1,12 @@
 const fs = require('fs');
 const Discord = require('discord.js'); 
 const keep_alive = require('./keep_alive.js');
-const Enmap = require('enmap');
 require('dotenv').config(); 
 
 // bot client 
 const client = new Discord.Client(); 
 client.commands = new Discord.Collection();
+
 // prefix 
 const prefix = process.env.DEBUG ? "$" : "!";
 
@@ -23,7 +23,7 @@ client.on('ready', () => {
 }); 
 
 // message 
-client.on('message', (message) => {
+client.on('message', async (message) => {
     if (!message.content.startsWith(prefix) || message.author.bot || !message.guild) return; 
 
     console.log("Message: " + message.content);
@@ -32,25 +32,29 @@ client.on('message', (message) => {
 	const command = messageArray[0]; 
 	const args = messageArray.slice(1);
 
-	if (command === 'calc') {
-        client.commands.get('calc').execute(message, prefix, command, args);
-	}
-    else if (command === 'imdabest') {
-        client.commands.get('imdabest').execute(message);
+    try {
+    	if (command === 'calc') {
+            client.commands.get('calc').execute(message, prefix, command, args);
+    	}
+        else if (command === 'imdabest') {
+            await client.commands.get('imdabest').execute(message);
+        }
+        else if (command === 'imnotdabest') {
+            await client.commands.get('imnotdabest').execute(message);
+        }
+        else if (command === 'whosdabest') {
+            await client.commands.get('whosdabest').execute(message);
+        }
+        else if (command === 'fame') {
+            await client.commands.get('fame').execute(message, prefix, args);
+        }
+        // else if (command === 'team') {
+        //     await client.commands.get('team').execute(message, prefix, args);
+        // }
+    } catch (err) {
+        console.log(err);
+        message.channel.send("Unhandled error: " + err);
     }
-    else if (command === 'imnotdabest') {
-        client.commands.get('imnotdabest').execute(message);
-    }
-    else if (command === 'whosdabest') {
-        client.commands.get('whosdabest').execute(message);
-    }
-    else if (command === 'fame') {
-        client.commands.get('fame').execute(message, prefix, args);
-    }
-    // else if (command === 'team') {
-    //     client.commands.get('team').execute(message, prefix, args);
-    // }
-
 });
 
 process.on('unhandledRejection', (reason, promise) => {

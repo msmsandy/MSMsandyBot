@@ -4,6 +4,7 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 let FameEntrySchema = new mongoose.Schema({
 	user: {
 		type: String, 
+		required: String, 
 	},
 	ign: String,
 });
