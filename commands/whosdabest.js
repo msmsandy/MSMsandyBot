@@ -14,7 +14,7 @@ module.exports = {
                 message.channel.send('you are!');
             }
             else {
-                message.channel.send(`<@${daBest}'> is!`);
+                message.channel.send(`<@${daBest}> is!`);
             }
         } catch (err) {
             throw err; 
