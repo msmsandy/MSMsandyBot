@@ -50,7 +50,7 @@ function help(message, prefix) {
     let description = '**Team Signups *(BETA)***\nPlease let me know if there are any issues.';
     let commandsString = 'commands:';
     for (const command in argumentType) {
-        commandsString += `\n\t${prefix}fame ${argumentType[command].command} ${argumentType[command].description}`;
+        commandsString += `\n\t${prefix}team ${argumentType[command].command} ${argumentType[command].description}`;
     }
     message.channel.send(description + '\n' + commandsString);
 }
@@ -137,12 +137,12 @@ async function formatTeamText(guild, team) {
 			} catch (err) {
 				displayName = checkin.user; 
 			}
-
-			let text = `${displayName}`; 
 			if (checkin.checkinText.length > 0) {
-				text += `: ${checkin.checkinText}`;
+				checkinUserText = `${checkin.checkinText} (${displayName})`;
 			}
-			checkinUserText = text; 
+			else {
+				checkinUserText = `${displayName}`;
+			}
 		}
 		teamList.push(`${i+1}. ${checkinUserText}`);
 	}
