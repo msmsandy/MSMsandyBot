@@ -28,8 +28,8 @@ client.on('message', async (message) => {
 
     console.log("Message: " + message.content);
 
-    const messageArray = message.content.toLowerCase().slice(prefix.length).trim().split(/ +/);
-	const command = messageArray[0]; 
+    const messageArray = message.content.slice(prefix.length).trim().split(/ +/);
+	const command = messageArray[0].toLowerCase(); 
 	const args = messageArray.slice(1);
 
     try {
@@ -48,9 +48,9 @@ client.on('message', async (message) => {
         else if (command === 'fame') {
             await client.commands.get('fame').execute(message, prefix, args);
         }
-        // else if (command === 'team') {
-        //     await client.commands.get('team').execute(message, prefix, args);
-        // }
+        else if (command === 'team') {
+            await client.commands.get('team').execute(message, prefix, args);
+        }
     } catch (err) {
         console.log(err);
         message.channel.send("Unhandled error: " + err);
