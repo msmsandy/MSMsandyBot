@@ -108,7 +108,7 @@ async function getTeamText(guild, teamId) {
 }
 
 async function formatTeamText(guild, team) {
-	let teamHeading = `\`${team.id}\`: **${team.name}**\n> ${team.description}\n`;
+	let teamHeading = `\`${team.id}\`: **${team.name}**\n${team.description}\n`;
 	let teamList = []; 
 
 	for (let i = 0; i < team.slots; i++) {
@@ -146,10 +146,12 @@ async function add(message, args) {
 	let teamId = args[0];
 	let slots = args[1];
 
-	const matches = args.slice(2).join(' ').match(/"(.*?)"/g);
+	const matches = args.slice(2).join(' ').match(/"(.*?)"/gs);
+	console.log('111' + args.slice(2).join(' '));
 	let name = undefined; 
 	let description = undefined;
 	if (matches) {
+		console.log(matches);
 		name = matches[0]; 
 		description = matches[1];
 
