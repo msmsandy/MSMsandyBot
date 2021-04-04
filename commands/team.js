@@ -12,32 +12,47 @@ const {
 const argumentType = {
 	view: {
 		command: 'view', 
-		description: 'teamid | list | here | all',
+		description: '`teamid | list | here | all`',
 	},
 	add: {
 		command: 'add', 
-		description: 'teamid <# of slots> \"<name>\" \"<description>\"',
+		description: '`teamid` `<# of slots>` `\"<name>\"` `\"<description>\"`',
 	}, 
-	remove: {
-		command: 'remove',
-		description: 'teamid',
-	},
+	// remove: {
+	// 	command: 'remove',
+	// 	description: '`teamid`',
+	// },
 	// edit: {
 	// 	command: 'edit',
 	// 	description: 'teamid <name | slots> <\"<name>\" | # >', 
 	// }, 
 	checkin: {
 		command: 'checkin', 
-		description: 'teamid <optional: specific signup text>>'
+		description: '`teamid` `<optional: specific signup text>`'
 	}, 
 	checkout: {
 		command: 'checkout',
-		description: 'teamid OR <# in list>'
+		description: '`teamid | <# in list>`'
 	}, 
 	clear: {
 		command: 'clear',
-		description: 'teamid'
-	}
+		description: '`teamid`'
+	}, 
+	help: {
+		command: 'help',
+		description: '',
+	},
+}
+
+// Help
+
+function help(message, prefix) {
+    let description = '**Team Signups *(BETA)***\nPlease let me know if there are any issues.';
+    let commandsString = 'commands:';
+    for (const command in argumentType) {
+        commandsString += `\n\t${prefix}fame ${argumentType[command].command} ${argumentType[command].description}`;
+    }
+    message.channel.send(description + '\n' + commandsString);
 }
 
 // View 
@@ -191,7 +206,7 @@ async function addTeam(guild, teamId, slots, name, description) {
 async function checkin(message, args) {
 	console.log('args: ' + args); 
 	const teamId = args[0];
-	const checkinText = args.slice(1).join(' ');
+	const checkinText = args.slice(1).join(' ').trim();
 
 	if (!teamId || teamId.length === 0) {
 		message.channel.send('u didnt give me a team id');
@@ -201,7 +216,7 @@ async function checkin(message, args) {
 	try {
 		await checkinTeam(message.guild.id, teamId, message.author.id, checkinText);
 		const teamText = await getTeamText(message.guild, teamId); 
-		message.channel.send(`successfully checked into \`${teamId}\` with \`${checkinText}\`\n\n${teamText}`);
+		message.channel.send(`successfully checked into \`${teamId}\`\n\n${teamText}`);
 	} catch (err) {
 		if (err === TeamError.USER_ALREADY_CHECKED_IN) {
 			const teamText = await getTeamText(message.guild, teamId); 
@@ -296,7 +311,10 @@ module.exports = {
     	const firstArg = args[0]; 
 
     	try {
-	    	if (firstArg === argumentType.view.command) {
+    		if (firstArg === argumentType.help.command) {
+    			help(message, prefix);
+    		}
+	    	else if (firstArg === argumentType.view.command) {
 	    		// view teams 
 	    		await view(message, args[1]);
 	    	}
@@ -311,6 +329,9 @@ module.exports = {
 	    	}
 	    	else if (firstArg === argumentType.clear.command) {
 	    		await clear(message, args.slice(1));
+	    	}
+	    	else {
+	    		message.reply('wtf u doin');
 	    	}
     	} catch (err) {
     		throw err; 
