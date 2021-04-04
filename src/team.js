@@ -1,5 +1,5 @@
 const db = require('./database');
-const { Team, TeamList } = require('./models/team'); 
+const { Team, TeamList, Checkin } = require('./models/team'); 
 
 async function getTeamListData(guildId) {
 	console.log("Getting Team List Data for " + guildId);
@@ -87,34 +87,107 @@ async function removeTeam(guildId, teamId) {
 	}
 }
 
-async function checkin(guildId, teamId, user, displayName, signupText) {
+async function checkinTeam(guildId, teamId, user, checkinText) {
+	console.log('checkinTeam');
 	try {
 		const teamList = await getTeamListData(guildId); 
 		const team = teamList.teams.find(team => team.id === teamId); 
 
-		if (team.checkins.length < team.slots) {
-			const checkin = Checkin({
-				user: user, 
-				displayName: displayName, 
-				signupText: signupText, 
-			})
-			team.checkins.push(checkin);
+		if (team) {
+			const userCheckin = team.checkins.find(checkin => checkin.user === user && checkin.checkinText === checkinText); 
+			if (userCheckin) {
+				throw TeamError.USER_ALREADY_CHECKED_IN; 
+			}
+			else if (team.checkins.length < team.slots) {
+				const checkin = Checkin({
+					user: user, 
+					checkinText: checkinText, 
+				});
+				team.checkins.push(checkin);
+
+				await teamList.save();
+			}
+			else {
+				throw TeamError.TEAM_FULL; 
+			}
 		}
 		else {
-			console.log('team is full');
+			throw TeamError.TEAM_DOES_NOT_EXIST;
 		}
+
 	} catch (err) {
 		console.error(err);
 		throw err; 
 	}
 }
 
-async function checkout(guildId, teamId, user) {
+async function checkoutTeam(guildId, teamId, user, index) {
+	console.log('checkoutTeam'); 
 
+	try {
+		const teamList = await getTeamListData(guildId); 
+		const team = teamList.teams.find(team => team.id === teamId); 
+
+		if (team) {
+			if (index !== undefined) {
+				// find index and delete 
+				if (0 <= index && index < team.checkins.length) {
+					team.checkins.splice(index, 1); 
+				} 
+				else {
+					throw TeamError.CHECKOUT_INVALID_INDEX; 
+				}
+			}
+			else {
+				// find all user checkins 
+				const usersCheckins = team.checkins.filter(checkin => checkin.user === user); 
+				if (usersCheckins.length === 0) {
+					throw TeamError.USER_NOT_CHECKED_IN; 
+				}
+				else if (usersCheckins.length > 1) {
+					throw TeamError.USER_CHECKED_IN_MULTIPLE; 
+				}	
+				else {
+					const checkinIndex = team.checkins.find(checkin => checkin.user === user); 
+					team.checkins.splice(checkinIndex, 1); 
+				}
+			}
+		}
+		else {
+			throw TeamError.TEAM_DOES_NOT_EXIST; 
+		}
+		await teamList.save();
+	} catch (err) {
+		throw err; 
+	}
 }
 
-async function checkout(guildId, teamId, index) {
+async function clearTeam(guildId, teamId) {
+	console.log('clearTeam'); 
 
+	try {
+		const teamList = await getTeamListData(guildId); 
+		const team = teamList.teams.find(team => team.id === teamId); 
+
+		if (team) {
+			team.checkins = []; 
+			await teamList.save();
+		}
+		else {
+			throw TeamError.TEAM_DOES_NOT_EXIST;
+		}
+	} catch (err) {
+		throw err; 
+	}
+}
+
+const TeamError = {
+	USER_ALREADY_CHECKED_IN: "USER_ALREADY_CHECKED_IN", 
+	TEAM_FULL: "TEAM_FULL", 
+	TEAM_DOES_NOT_EXIST: "TEAM_DOES_NOT_EXIST", 
+	CHECKOUT_INVALID_INDEX: "CHECKOUT_INVALID_INDEX",
+	USER_NOT_CHECKED_IN: "USER_NOT_CHECKED_IN",
+	USER_CHECKED_IN_MULTIPLE: "USER_CHECKED_IN_MULTIPLE", 
 }
 
 module.exports = {
@@ -122,6 +195,8 @@ module.exports = {
 	getTeam, 
 	addOrUpdateTeam, 
 	removeTeam, 
-	checkin, 
-	checkout, 
+	checkinTeam, 
+	checkoutTeam, 
+	clearTeam, 
+	TeamError,
 }

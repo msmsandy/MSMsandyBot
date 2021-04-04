@@ -3,34 +3,36 @@ const {
 	getTeam, 
 	addOrUpdateTeam, 
 	removeTeam, 
-	checkin, 
-	checkout, 
+	checkinTeam, 
+	checkoutTeam, 
+	clearTeam, 
+	TeamError, 
 } = require('../src/team');
 
 const argumentType = {
 	view: {
 		command: 'view', 
-		description: 'teamid | here | all',
+		description: 'teamid | list | here | all',
 	},
 	add: {
 		command: 'add', 
-		description: 'teamid \"<name>\" <# of slots>',
+		description: 'teamid <# of slots> \"<name>\" \"<description>\"',
 	}, 
 	remove: {
 		command: 'remove',
 		description: 'teamid',
 	},
-	edit: {
-		command: 'edit',
-		description: 'teamid <name | slots> <\"<name>\" | # >', 
-	}, 
-	signup: {
+	// edit: {
+	// 	command: 'edit',
+	// 	description: 'teamid <name | slots> <\"<name>\" | # >', 
+	// }, 
+	checkin: {
 		command: 'checkin', 
-		description: 'teamid <optional: \"<specific signup text>\">'
+		description: 'teamid <optional: specific signup text>>'
 	}, 
-	dropout: {
-		command: 'dropout',
-		description: '<teamid | <# in list>>'
+	checkout: {
+		command: 'checkout',
+		description: 'teamid OR <# in list>'
 	}, 
 	clear: {
 		command: 'clear',
@@ -43,18 +45,18 @@ const argumentType = {
 async function view(message, arg) {
 	try {
 		if (arg === 'all') {
-			const teamsText = await getTeamsText(message.guild.id, formatTeamText); 
+			const teamsText = await getTeamsText(message.guild, formatTeamText); 
 			message.channel.send(`**Teams:**\n\n${teamsText}`); 
 		}
-		else if (arg === 'teams') {
-			const teamsText = await getTeamsText(message.guild.id, formatTeamNamesText);
+		else if (arg === 'list') {
+			const teamsText = await getTeamsText(message.guild, formatTeamNamesText);
 			message.channel.send(`**Teams:**\n\n${teamsText}`); 
 		}
 		else if (arg === 'here') {
 			message.reply('not implemented yet');
 		}
 		else if (arg !== undefined) {
-			const teamText = await getTeamText(message.guild.id, arg);
+			const teamText = await getTeamText(message.guild, arg);
 
 			if (teamText) {
 				message.channel.send(teamText); 
@@ -71,13 +73,13 @@ async function view(message, arg) {
 	}
 }
 
-async function getTeamsText(guildId, teamFunction) {
+async function getTeamsText(guild, formatText) {
 	try {
-		const teams = (await getTeamListData(guildId)).teams; 
+		const teams = (await getTeamListData(guild.id)).teams; 
 		let teamsText = []; 
 		for (const team of teams) {
 			console.log('team' + team.slots);
-			const teamText = teamFunction(team);
+			const teamText = await formatText(guild, team);
 			teamsText.push(teamText);
 		}
 		if (teamsText.length === 0) {
@@ -91,11 +93,11 @@ async function getTeamsText(guildId, teamFunction) {
 	}
 }
 
-async function getTeamText(guildId, teamId) {
+async function getTeamText(guild, teamId) {
 	try {
-		const team = (await getTeam(guildId, teamId)); 
+		const team = (await getTeam(guild.id, teamId)); 
 		if (team) {
-			return formatTeamText(team);
+			return await formatTeamText(guild, team);
 		}
 		else {
 			return undefined; 
@@ -105,7 +107,7 @@ async function getTeamText(guildId, teamId) {
 	}
 }
 
-function formatTeamText(team) {
+async function formatTeamText(guild, team) {
 	let teamHeading = `\`${team.id}\`: **${team.name}**\n> ${team.description}\n`;
 	let teamList = []; 
 
@@ -113,14 +115,26 @@ function formatTeamText(team) {
 		let checkinUserText = ''; 
 		const checkin = team.checkins[i]; 
 		if (checkin) {
-			checkinUserText = checkin.user; 
+			let displayName = '';
+			try {
+				const member = await guild.members.fetch(checkin.user); 
+				displayName = member.displayName; 
+			} catch (err) {
+				displayName = checkin.user; 
+			}
+
+			let text = `${displayName}`; 
+			if (checkin.checkinText.length > 0) {
+				text += `: ${checkin.checkinText}`;
+			}
+			checkinUserText = text; 
 		}
 		teamList.push(`${i+1}. ${checkinUserText}`);
 	}
 	return `${teamHeading}\`\`\`${teamList.join('\n')}\`\`\``
 }
 
-function formatTeamNamesText(team) {
+function formatTeamNamesText(guild, team) {
 	return `- \`${team.id}\`: ${team.name}`;
 }
 
@@ -153,7 +167,7 @@ async function add(message, args) {
 
 		console.log(`Adding \tteam: ${teamId}\n\tslots: ${slots}\n\tname: ${name}\n\tdescription: ${description}`);
 
-		await addTeam(message.guild.id, teamId, slots, name, description);
+		await addTeam(message.guild, teamId, slots, name, description);
 
 		message.channel.send("added team");
 	}
@@ -162,21 +176,115 @@ async function add(message, args) {
 	}
 }
 
-async function addTeam(guildId, teamId, slots, name, description) {
+async function addTeam(guild, teamId, slots, name, description) {
 	try {
-		await addOrUpdateTeam(guildId, teamId, slots, name, description); 
+		await addOrUpdateTeam(guild.id, teamId, slots, name, description); 
 	} catch (err) {
 		throw err; 
 	}
 }
 
-// async function checkin(guildId, teamId, user, displayName, signupText) {
-// 	try {
-// 		await checkin(guildId, teamId, user, displayName, signupText);
-// 	} catch (err) {
-// 		throw err; 
-// 	}
-// }
+// Checkin 
+
+async function checkin(message, args) {
+	console.log('args: ' + args); 
+	const teamId = args[0];
+	const checkinText = args.slice(1).join(' ');
+
+	if (!teamId || teamId.length === 0) {
+		message.channel.send('u didnt give me a team id');
+		return;
+	}
+
+	try {
+		await checkinTeam(message.guild.id, teamId, message.author.id, checkinText);
+		const teamText = await getTeamText(message.guild, teamId); 
+		message.channel.send(`successfully checked into \`${teamId}\` with \`${checkinText}\`\n\n${teamText}`);
+	} catch (err) {
+		if (err === TeamError.USER_ALREADY_CHECKED_IN) {
+			const teamText = await getTeamText(message.guild, teamId); 
+			message.channel.send(`you already checked into \`${teamId}\`, loser\n\n${teamText}`);
+		}
+		else if (err === TeamError.TEAM_FULL) {
+			const teamText = await getTeamText(message.guild, teamId); 
+			message.channel.send(`\`${teamId}\` is full sucks for you haha\n\n${teamText}`);
+		}
+		else if (err === TeamError.TEAM_DOES_NOT_EXIST) {
+			const teamsText = await getTeamsText(message.guild, formatTeamNamesText);
+			message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+		}
+		else {
+			throw err; 
+		}
+	}
+}
+
+// Checkout 
+
+async function checkout(message, args) {
+	console.log('args: ' + args); 
+	const teamId = args[0]; 
+	let checkoutNumber = args[1]; 
+
+	if (!isNaN(checkoutNumber)) {
+		checkoutNumber = checkoutNumber - 1; 
+	}
+
+	if (!teamId || teamId.length === 0) {
+		message.channel.send('u didnt give me a team id');
+		return;
+	}
+
+	console.log(teamId + checkoutNumber);
+
+	try {
+		await checkoutTeam(message.guild.id, teamId, message.author.id, checkoutNumber); 
+		const teamText = await getTeamText(message.guild, teamId); 
+		message.channel.send(`checked out of \`${teamId}\`\n\n${teamText}`);
+	} catch (err) {
+		if (err === TeamError.USER_NOT_CHECKED_IN) {
+			message.channel.send(`you're not checked into \`${teamId}\` ya noob`);
+		}
+		else if (err === TeamError.USER_CHECKED_IN_MULTIPLE) {
+			message.channel.send(`you checked into \`${teamId}\` multiple times. please specify the number`);
+		}
+		else if (err === TeamError.CHECKOUT_INVALID_INDEX) {
+			message.channel.send(`that number aint valid bro`);
+		}
+		else if (err === TeamError.TEAM_DOES_NOT_EXIST) {
+			const teamsText = await getTeamsText(message.guild, formatTeamNamesText);
+			message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+		}
+		else {
+			throw err; 
+		}
+	}
+}
+
+// Clear 
+
+async function clear(message, args) {
+	const teamId = args[0]; 
+
+	if (!teamId || teamId.length === 0) {
+		message.channel.send('u didnt give me a team id');
+		return;
+	}
+
+	try {
+		await clearTeam(message.guild.id, teamId);
+		const teamText = await getTeamText(message.guild, teamId);
+		message.channel.send(`\`${teamId}\` cleared\n\n${teamText}`);
+	} catch (err) {
+		if (err === TeamError.TEAM_DOES_NOT_EXIST) {
+			const teamsText = await getTeamsText(message.guild, formatTeamNamesText);
+			message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+		}
+		else {
+			throw err; 
+		}
+	}
+}
 
 module.exports = {
     name: 'team', 
@@ -192,6 +300,15 @@ module.exports = {
 	    	}
 	    	else if (firstArg === argumentType.add.command) {
 	    		await add(message, args.slice(1));
+	    	}
+	    	else if (firstArg === argumentType.checkin.command) {
+	    		await checkin(message, args.slice(1));
+	    	}
+	    	else if (firstArg === argumentType.checkout.command) {
+	    		await checkout(message, args.slice(1));
+	    	}
+	    	else if (firstArg === argumentType.clear.command) {
+	    		await clear(message, args.slice(1));
 	    	}
     	} catch (err) {
     		throw err; 

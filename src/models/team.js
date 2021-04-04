@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 
 let CheckinSchema = new mongoose.Schema({
 	user: { type: String }, 
-	displayName: { type: String }, 
-	signupText: { type: String }, 
+	checkinText: { type: String }, 
 });
 
 let TeamSchema = new mongoose.Schema({
