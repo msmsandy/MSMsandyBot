@@ -71,8 +71,24 @@ function help(message, prefix) {
 async function view(message, arg) {
 	try {
 		if (arg === 'all') {
-			const teamsText = await getTeamsText(message.guild, formatTeamText); 
-			message.channel.send(`**all teams:**\n\n${teamsText}`); 
+			await message.reply(`do you really wish to view \`all\` teams? this will list all teams from all channels. maybe you wanted to view \`here\` which will list all teams within this channel.\nreply with what you want to continue with: \`all\` or \`here\``);
+			let filter = m => m.author.id === message.author.id;
+			let responseMessage = await message.channel.awaitMessages(filter, {
+	            max: 1,
+	            time: 30000,
+	            errors: ['time']
+	        });
+	        responseMessage = responseMessage.first(); 
+	        if (responseMessage.content === 'all') {
+				const teamsText = await getTeamsText(message.guild, formatTeamText); 
+				message.channel.send(`**all teams:**\n\n${teamsText}`); 
+			}
+			else if (responseMessage.content === 'here') {
+				await view(message, 'here');
+			}
+			else {
+				message.reply('that\'s not what i asked for');
+			}
 		}
 		else if (arg === 'list') {
 			const teamsText = await getTeamsText(message.guild, formatTeamNamesText);
