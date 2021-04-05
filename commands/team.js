@@ -12,35 +12,42 @@ const {
 const argumentType = {
 	view: {
 		command: 'view', 
-		description: '`teamid | list | here | all`',
+		arguments: '`teamid | list | here | all`',
+		description: 'view teams',
 	},
 	add: {
-		command: 'add', 
-		description: '`teamid` `<# of slots>` `\"<name>\"` `\"<description>\"`',
+		command: 'newteam', 
+		arguments: '`teamid` `<# of slots>` `\"<name>\"` `\"<description>\"`',
+		description: 'add a new team with teamid, number of slots, name (optional), description (optional)',
 	}, 
-	// remove: {
-	// 	command: 'remove',
-	// 	description: '`teamid`',
-	// },
+	delete: {
+		command: 'deleteteam',
+		arguments: '`teamid`',
+		description: 'delete team with teamid',
+	},
 	// edit: {
 	// 	command: 'edit',
 	// 	description: 'teamid <name | slots> <\"<name>\" | # >', 
 	// }, 
 	checkin: {
 		command: 'checkin', 
-		description: '`teamid` `<optional: specific signup text>`'
+		arguments: '`teamid` `<optional: ign>`', 
+		description: 'checkin to team with teamid',
 	}, 
 	checkout: {
 		command: 'checkout',
-		description: '`teamid | <# in list>`'
+		arguments: '`teamid | <# in list>`', 
+		description: 'checkout of team with teamid',
 	}, 
 	clear: {
 		command: 'clear',
-		description: '`teamid`'
+		arguments: '`teamid`', 
+		description: 'clear team with teamid',
 	}, 
 	help: {
 		command: 'help',
-		description: '',
+		arguments: '', 
+		description: 'view this',
 	},
 }
 
@@ -50,7 +57,7 @@ function help(message, prefix) {
     let description = '**Team Signups *(BETA)***\nPlease let me know if there are any issues.';
     let commandsString = 'commands:';
     for (const command in argumentType) {
-        commandsString += `\n\t${prefix}team ${argumentType[command].command} ${argumentType[command].description}`;
+        commandsString += `\n\t**${prefix}team ${argumentType[command].command} ${argumentType[command].arguments}**\n\t\t${argumentType[command].description}`;
     }
     message.channel.send(description + '\n' + commandsString);
 }
@@ -84,7 +91,13 @@ async function view(message, arg) {
 			message.reply('you didn\'t specify what you wanna view, dingus');
 		}
 	} catch (err) {
-		throw err; 
+		if (err == TeamError.TEAM_DOES_NOT_EXIST) {
+			const teamsText = await getTeamsText(message.guild, formatTeamNamesText);
+			message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+		}
+		else {
+			throw err; 
+		}
 	}
 }
 
@@ -198,6 +211,44 @@ async function addTeam(guild, teamId, slots, name, description) {
 		await addOrUpdateTeam(guild.id, teamId, slots, name, description); 
 	} catch (err) {
 		throw err; 
+	}
+}
+
+// Delete 
+
+async function deleteTeam(message, teamId) {
+	if (!teamId || teamId.length === 0) {
+		message.channel.send('u didnt give me a team id');
+		return;
+	}
+
+	try {
+		const teamText = await getTeamText(message.guild, teamId); 
+
+		await message.reply(`do you wish to delete this team?\n${teamText}\n\nthis cannot be undone. reply with \`${teamId}\` to delete forever.`);
+		let filter = m => m.author.id === message.author.id;
+		let responseMessage = await message.channel.awaitMessages(filter, {
+            max: 1,
+            time: 30000,
+            errors: ['time']
+        });
+        responseMessage = responseMessage.first(); 
+
+        if (responseMessage.content.toLowerCase() === teamId) {
+        	await removeTeam(message.guild.id, teamId); 
+			message.channel.send(`${teamId} has been delete`);
+        }
+		else {
+			message.channel.send(`${teamId} has not been deleted`);
+		}
+	} catch (err) {
+		if (err === TeamError.TEAM_DOES_NOT_EXIST) {
+			const teamsText = await getTeamsText(message.guild, formatTeamNamesText);
+			message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+		} 
+		else {
+			message.reply('you took too long');
+		}
 	}
 }
 
@@ -320,6 +371,9 @@ module.exports = {
 	    	}
 	    	else if (firstArg === argumentType.add.command) {
 	    		await add(message, args.slice(1));
+	    	}
+	    	else if (firstArg === argumentType.delete.command) {
+	    		await deleteTeam(message, args[1]);
 	    	}
 	    	else if (firstArg === argumentType.checkin.command) {
 	    		await checkin(message, args.slice(1));

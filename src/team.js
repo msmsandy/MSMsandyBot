@@ -25,9 +25,13 @@ async function getTeam(guildId, teamId) {
 	try {
 		const teamList = await getTeamListData(guildId); 
 		const team = teamList.teams.find(team => team.id === teamId); 
-		return team; 
+		if (team) {
+			return team; 
+		} 
+		else {
+			throw TeamError.TEAM_DOES_NOT_EXIST;
+		}
 	} catch (err) {
-		console.error(err); 
 		throw err; 
 	}
 }
@@ -79,10 +83,9 @@ async function removeTeam(guildId, teamId) {
 			return existingTeam; 
 		}
 		else {
-			return undefined; 
+			return TeamError.TEAM_DOES_NOT_EXIST; 
 		}
 	} catch (err) {
-		console.error(err); 
 		throw err; 
 	}
 }
