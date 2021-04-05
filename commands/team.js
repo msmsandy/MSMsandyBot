@@ -362,7 +362,7 @@ async function deleteTeam(message, teamId) {
         });
         responseMessage = responseMessage.first(); 
 
-        if (responseMessage.content.toLowerCase() === teamId) {
+        if (responseMessage.content === teamId) {
         	await removeTeam(message.guild.id, teamId); 
 			message.channel.send(`${teamId} has been deleted`);
         }
