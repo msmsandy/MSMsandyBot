@@ -30,7 +30,7 @@ const argumentType = {
 	},
 	edit: {
 		command: 'editteam',
-		arguments: '`teamid` `<setting: all | teamid | slots | channel | name | description>` `value(s)`',
+		arguments: '`<setting: all | teamid | slots | channel | name | description>` `teamid` `value(s)`',
 		description: 'edit setting for team with teamid. `all` will overwrite all values',
 	}, 
 	checkin: {
