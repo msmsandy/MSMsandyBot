@@ -353,7 +353,10 @@ async function edit(message, args) {
 		if (err === TeamError.TEAM_DOES_NOT_EXIST) {
 			const teamsText = await getTeamsText(message.guild, formatTeamNamesText);
 			message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
-		} 
+		}
+		else if (err === TeamError.TEAM_HAS_CHECKINS) {
+			message.channel.send(`\`${teamId}\` has checkins. clear it before you try to do anything else.`);
+		}
 		else { throw err; }
 	}
 }
