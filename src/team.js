@@ -225,20 +225,20 @@ async function checkoutTeam(guildId, teamId, user, index) {
 	}
 }
 
-async function clearTeam(guildId, teamId) {
+async function clearTeam(guildId, filter) {
 	console.log('clearTeam'); 
 
 	try {
 		const teamList = await getTeamListData(guildId); 
-		const team = teamList.teams.find(team => team.id === teamId); 
-
-		if (team) {
+		const teams = teamList.teams.filter(filter); 
+		if (teams.length === 0) {
+			throw TeamError.TEAM_DOES_NOT_EXIST; 
+		}
+		teams.forEach( team => {
 			team.checkins = []; 
-			await teamList.save();
-		}
-		else {
-			throw TeamError.TEAM_DOES_NOT_EXIST;
-		}
+		}); 
+		await teamList.save(); 
+		return teams; 
 	} catch (err) {
 		throw err; 
 	}

@@ -45,7 +45,7 @@ const argumentType = {
 	}, 
 	clear: {
 		command: 'clear',
-		arguments: '`teamid`', 
+		arguments: '`teamid | here`', 
 		description: 'clear team with teamid',
 	}, 
 	help: {
@@ -479,17 +479,23 @@ async function checkout(message, args) {
 // Clear 
 
 async function clear(message, args) {
-	const teamId = args[0]; 
+	const arg = args[0]; 
 
-	if (!teamId || teamId.length === 0) {
-		message.channel.send('u didnt give me a team id');
+	if (!arg || arg.length === 0) {
+		message.reply('u didnt tell me what to clear');
 		return;
 	}
 
 	try {
-		await clearTeam(message.guild.id, teamId);
-		const teamText = await getTeamText(message.guild, teamId);
-		message.channel.send(`\`${teamId}\` cleared\n\n${teamText}`);
+		let filter; 
+		if (arg === 'here') {
+			filter = team => team.channel === message.channel.id; 
+		}
+		else {
+			filter = team => team.id === arg; 
+		}
+		const teams = await clearTeam(message.guild.id, filter);
+		message.channel.send(`team${teams.length > 1 ? 's' : ''} cleared`);
 	} catch (err) {
 		if (err === TeamError.TEAM_DOES_NOT_EXIST) {
 			const teamsText = await getTeamsText(message.guild, formatTeamNamesText);
