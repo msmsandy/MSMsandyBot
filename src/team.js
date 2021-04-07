@@ -191,7 +191,7 @@ async function checkinTeam(guildId, teamId, user, checkinText) {
 }
 
 async function checkoutTeam(guildId, teamId, user, index) {
-	console.log('checkoutTeam'); 
+	console.log('checkoutTeam ' + teamId + user + index); 
 
 	try {
 		const teamList = await getTeamListData(guildId); 
@@ -217,7 +217,7 @@ async function checkoutTeam(guildId, teamId, user, index) {
 					throw TeamError.USER_CHECKED_IN_MULTIPLE; 
 				}	
 				else {
-					const checkinIndex = team.checkins.find(checkin => checkin.user === user); 
+					const checkinIndex = team.checkins.findIndex(checkin => checkin.user === user); 
 					team.checkins.splice(checkinIndex, 1); 
 				}
 			}
