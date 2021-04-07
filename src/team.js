@@ -94,6 +94,10 @@ async function editTeamSetting(setting, guildId, teamId, value) {
 		if (existingTeam !== undefined) {
 			let oldValue;
 			if (setting === TeamSetting.TEAM_ID) {
+				// validate that it doesn't already exist 
+				if(teamList.teams.find(team => team.id === value)) {
+					throw TeamError.TEAM_ALREADY_EXISTS; 
+				}
 				oldValue = existingTeam.id; 
 				existingTeam.id = value; 
 			}

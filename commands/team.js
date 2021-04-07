@@ -357,6 +357,9 @@ async function edit(message, args) {
 		else if (err === TeamError.TEAM_HAS_CHECKINS) {
 			message.channel.send(`\`${teamId}\` has checkins. clear it before you try to do anything else.`);
 		}
+		else if (err === TeamError.TEAM_ALREADY_EXISTS) {
+			message.channel.send(`\`${args[1]}\` already exists.`);
+		}
 		else { throw err; }
 	}
 }
