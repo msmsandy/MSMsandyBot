@@ -48,6 +48,11 @@ const argumentType = {
 		arguments: '`teamid | here`', 
 		description: 'clear team with teamid',
 	}, 
+	mention: {
+		command: 'mention', 
+		arguments: '`teamid` `message`',
+		description: 'mention all users with message in the team with teamid',
+	}, 
 	help: {
 		command: 'help',
 		arguments: '', 
@@ -513,6 +518,49 @@ async function clear(message, args) {
 	}
 }
 
+// Mention 
+
+async function mention(message, args) {
+	const teamId = args[0]; 
+	const mentionMessage = args.slice(1).join(' '); 
+	if (!teamId || teamId.length === 0) {
+		message.channel.send('u didnt give me a team id');
+		return;
+	}
+	if (mentionMessage.length === 0) {
+		message.channel.send('u didnt give me words to say');
+		return;
+	}
+	try {
+		const team = await getTeam(message.guild.id, teamId); 
+		
+		let userTexts = [];
+		team.checkins.forEach( checkin => {
+			let userText = `<@${checkin.user}>`;
+			if (checkin.checkinText && checkin.checkinText.length !== 0) {
+				userText += ` (${checkin.checkinText})`;
+			}
+			userTexts.push(userText);
+		});
+
+		if (userTexts.length === 0) {
+			message.channel.send(`there's no one to mention in \`${teamId}\``);
+		}
+		else {
+			let messageText = userTexts.join(', ') + ': ' + mentionMessage;  
+			message.channel.send(messageText);
+		}
+	} catch (err) {
+		if (err === TeamError.TEAM_DOES_NOT_EXIST) {
+			const teamsText = await getTeamsText(message.guild, formatTeamNamesText);
+			message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+		}
+		else {
+			throw err; 
+		}
+	}
+}
+
 module.exports = {
     name: 'team', 
     description: 'Team', 
@@ -544,6 +592,9 @@ module.exports = {
 	    	}
 	    	else if (firstArg === argumentType.clear.command) {
 	    		await clear(message, args.slice(1));
+	    	}
+	    	else if (firstArg === argumentType.mention.command) {
+	    		await mention(message, args.slice(1));
 	    	}
 	    	else {
 	    		message.reply('wtf u doin');
