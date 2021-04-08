@@ -35,8 +35,8 @@ const argumentType = {
 	}, 
 	checkin: {
 		command: 'checkin', 
-		arguments: '`teamid` `<optional: ign>`', 
-		description: 'checkin to team with teamid',
+		arguments: '`teamid` `<optional: @user>` `<optional: description>`', 
+		description: 'checkin to team with teamid. checking in another user will tie that user to the checkin',
 	}, 
 	checkout: {
 		command: 'checkout',
@@ -415,21 +415,32 @@ async function deleteTeam(message, teamId) {
 async function checkin(message, args) {
 	console.log('args: ' + args); 
 	const teamId = args[0];
-	const checkinText = args.slice(1).join(' ').trim();
-
 	if (!teamId || teamId.length === 0) {
 		message.channel.send('u didnt give me a team id');
 		return;
 	}
+	let user; 
+	if (args[1] && args[1].startsWith('<@') && args[1].endsWith('>')) {
+		user = args[1].slice(2, -1); 
+		if (user.startsWith('!')) {
+			user = user.slice(1);
+		}
+		args = args.slice(2); 
+	}
+	else {
+		user = message.author.id; 
+		args = args.slice(1); 
+	}
+	const checkinText = args.join(' ').trim();
 
 	try {
-		await checkinTeam(message.guild.id, teamId, message.author.id, checkinText);
+		await checkinTeam(message.guild.id, teamId, user, checkinText);
 		const teamText = await getTeamText(message.guild, teamId); 
 		message.channel.send(`successfully checked into \`${teamId}\`\n\n${teamText}`);
 	} catch (err) {
 		if (err === TeamError.USER_ALREADY_CHECKED_IN) {
 			const teamText = await getTeamText(message.guild, teamId); 
-			message.channel.send(`you already checked into \`${teamId}\`, loser\n\n${teamText}`);
+			message.channel.send(`already checked into \`${teamId}\`, loser\n\n${teamText}`);
 		}
 		else if (err === TeamError.TEAM_FULL) {
 			const teamText = await getTeamText(message.guild, teamId); 
@@ -533,7 +544,7 @@ async function mention(message, args) {
 	}
 	try {
 		const team = await getTeam(message.guild.id, teamId); 
-		
+
 		let userTexts = [];
 		team.checkins.forEach( checkin => {
 			let userText = `<@${checkin.user}>`;
