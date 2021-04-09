@@ -463,13 +463,13 @@ async function checkout(message, args) {
 	const teamId = args[0]; 
 	let checkoutNumber = args[1]; 
 
-	if (!isNaN(checkoutNumber)) {
-		checkoutNumber = checkoutNumber - 1; 
-	}
-
 	if (!teamId || teamId.length === 0) {
 		message.channel.send('u didnt give me a team id');
 		return;
+	}
+
+	if (checkoutNumber && !isNaN(checkoutNumber)) {
+		checkoutNumber = checkoutNumber; 
 	}
 
 	console.log(teamId + checkoutNumber);
@@ -521,7 +521,7 @@ async function clear(message, args) {
 	} catch (err) {
 		if (err === TeamError.TEAM_DOES_NOT_EXIST) {
 			const teamsText = await getTeamsText(message.guild, formatTeamNamesText);
-			message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+			message.channel.send(`\`${arg}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
 		}
 		else {
 			throw err; 

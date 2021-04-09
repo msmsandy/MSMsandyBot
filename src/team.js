@@ -194,15 +194,16 @@ async function checkinTeam(guildId, teamId, user, checkinText) {
 	}
 }
 
-async function checkoutTeam(guildId, teamId, user, index) {
-	console.log('checkoutTeam ' + teamId + user + index); 
+async function checkoutTeam(guildId, teamId, user, number) {
+	console.log('checkoutTeam ' + teamId + user + number); 
 
 	try {
 		const teamList = await getTeamListData(guildId); 
 		const team = teamList.teams.find(team => team.id === teamId); 
 
 		if (team) {
-			if (index !== undefined) {
+			if (number !== undefined) {
+				const index = number - 1; 
 				// find index and delete 
 				if (0 <= index && index < team.checkins.length) {
 					team.checkins.splice(index, 1); 
