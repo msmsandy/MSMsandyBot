@@ -86,7 +86,7 @@ async function getEntriesText(guildId) {
 
 async function enter(message, ign) {
     if (ign !== undefined) {
-        let filter = m => m.author.id === message.author.id
+        let filter = m => m.author.id === message.author.id;
 
         try {
             await message.reply('by entering, you agree to fame the winner within 24 hours if you lose. do you accept these terms? enter `y` or `n`'); 

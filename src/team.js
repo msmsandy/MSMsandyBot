@@ -25,24 +25,26 @@ async function getTeam(guildId, teamId) {
 	try {
 		const teamList = await getTeamListData(guildId); 
 		const team = teamList.teams.find(team => team.id === teamId); 
-		return team; 
+		if (team) {
+			return team; 
+		} 
+		else {
+			throw TeamError.TEAM_DOES_NOT_EXIST;
+		}
 	} catch (err) {
-		console.error(err); 
 		throw err; 
 	}
 }
 
 // returns existing team if it exists 
-async function addOrUpdateTeam(guildId, teamId, slots, name, description) {
+async function addTeam(guildId, teamId, slots, channel, name, description) {
 	try {
 		const teamList = await getTeamListData(guildId); 
 		
 		let existingTeam = teamList.teams.find(team => team.id === teamId); 
 
 		if (existingTeam !== undefined) {
-			existingTeam.name = name; 
-			existingTeam.description = description; 
-			existingTeam.slots = slots; 
+			throw TeamError.TEAM_ALREADY_EXISTS;
 		}
 		else {
 			const team = Team({
@@ -50,16 +52,84 @@ async function addOrUpdateTeam(guildId, teamId, slots, name, description) {
 				name: name, 
 				description: description, 
 				slots: slots, 
+				channel: channel, 
 				checkins: [],
 			});
 			teamList.teams.push(team);
 		}
 
 		const updated = await teamList.save(); 
-
-		return existingTeam; 
 	} catch (err) {
-		console.error(err);
+		throw err; 
+	}
+}
+
+async function editTeam(guildId, teamId, slots, channel, name, description) {
+	try {
+		const teamList = await getTeamListData(guildId); 
+		let existingTeam = teamList.teams.find(team => team.id === teamId); 
+		if (existingTeam !== undefined) {
+			if (existingTeam.checkins.length !== 0) {
+				throw TeamError.TEAM_HAS_CHECKINS; 
+			}
+			existingTeam.name = name; 
+			existingTeam.description = description; 
+			existingTeam.slots = slots; 
+			existingTeam.channel = channel;
+		}
+		else {
+			throw TeamError.TEAM_DOES_NOT_EXIST; 
+		}
+		await teamList.save(); 
+	} catch (err) {
+		throw err; 
+	}
+}
+
+async function editTeamSetting(setting, guildId, teamId, value) {
+	try {
+		 
+		const teamList = await getTeamListData(guildId); 
+		let existingTeam = teamList.teams.find(team => team.id === teamId); 
+		if (existingTeam !== undefined) {
+			let oldValue;
+			if (setting === TeamSetting.TEAM_ID) {
+				// validate that it doesn't already exist 
+				if(teamList.teams.find(team => team.id === value)) {
+					throw TeamError.TEAM_ALREADY_EXISTS; 
+				}
+				oldValue = existingTeam.id; 
+				existingTeam.id = value; 
+			}
+			else if (setting === TeamSetting.SLOTS) {
+				if (existingTeam.checkins.length !== 0) {
+					throw TeamError.TEAM_HAS_CHECKINS; 
+				}
+				oldValue = existingTeam.slots; 
+				existingTeam.slots = value; 
+			}
+			else if (setting === TeamSetting.CHANNEL) {
+				oldValue = existingTeam.channel; 
+				existingTeam.channel = value;
+			}
+			else if (setting === TeamSetting.NAME) {
+				oldValue = existingTeam.name; 
+				existingTeam.name = value; 
+			}
+			else if (setting === TeamSetting.DESCRIPTION) {
+				oldValue = existingTeam.description; 
+				existingTeam.description = value; 
+			}
+			else {
+				throw TeamError.INVALID_TEAM_SETTING;
+			}
+			await teamList.save(); 
+			return oldValue;
+		}
+		else {
+			throw TeamError.TEAM_DOES_NOT_EXIST; 
+		}
+	} catch (err) {
 		throw err; 
 	}
 }
@@ -72,17 +142,20 @@ async function removeTeam(guildId, teamId) {
 		const existingTeamIndex = teams.findIndex(team => team.id === teamId); 
 		if (existingTeamIndex !== -1) {
 			const existingTeam = teams[existingTeamIndex]; 
-			teams.splice(existingTeamIndex, 1); 
 
-			await teamList.save(); 
-
-			return existingTeam; 
+			if (existingTeam.checkins.length === 0) {
+				teams.splice(existingTeamIndex, 1); 
+				await teamList.save(); 
+				return existingTeam; 
+			}
+			else {
+				throw TeamError.TEAM_HAS_CHECKINS;
+			}
 		}
 		else {
-			return undefined; 
+			return TeamError.TEAM_DOES_NOT_EXIST; 
 		}
 	} catch (err) {
-		console.error(err); 
 		throw err; 
 	}
 }
@@ -121,15 +194,16 @@ async function checkinTeam(guildId, teamId, user, checkinText) {
 	}
 }
 
-async function checkoutTeam(guildId, teamId, user, index) {
-	console.log('checkoutTeam'); 
+async function checkoutTeam(guildId, teamId, user, number) {
+	console.log('checkoutTeam ' + teamId + user + number); 
 
 	try {
 		const teamList = await getTeamListData(guildId); 
 		const team = teamList.teams.find(team => team.id === teamId); 
 
 		if (team) {
-			if (index !== undefined) {
+			if (number !== undefined) {
+				const index = number - 1; 
 				// find index and delete 
 				if (0 <= index && index < team.checkins.length) {
 					team.checkins.splice(index, 1); 
@@ -148,7 +222,7 @@ async function checkoutTeam(guildId, teamId, user, index) {
 					throw TeamError.USER_CHECKED_IN_MULTIPLE; 
 				}	
 				else {
-					const checkinIndex = team.checkins.find(checkin => checkin.user === user); 
+					const checkinIndex = team.checkins.findIndex(checkin => checkin.user === user); 
 					team.checkins.splice(checkinIndex, 1); 
 				}
 			}
@@ -162,20 +236,20 @@ async function checkoutTeam(guildId, teamId, user, index) {
 	}
 }
 
-async function clearTeam(guildId, teamId) {
+async function clearTeam(guildId, filter) {
 	console.log('clearTeam'); 
 
 	try {
 		const teamList = await getTeamListData(guildId); 
-		const team = teamList.teams.find(team => team.id === teamId); 
-
-		if (team) {
+		const teams = teamList.teams.filter(filter); 
+		if (teams.length === 0) {
+			throw TeamError.TEAM_DOES_NOT_EXIST; 
+		}
+		teams.forEach( team => {
 			team.checkins = []; 
-			await teamList.save();
-		}
-		else {
-			throw TeamError.TEAM_DOES_NOT_EXIST;
-		}
+		}); 
+		await teamList.save(); 
+		return teams; 
 	} catch (err) {
 		throw err; 
 	}
@@ -184,19 +258,33 @@ async function clearTeam(guildId, teamId) {
 const TeamError = {
 	USER_ALREADY_CHECKED_IN: "USER_ALREADY_CHECKED_IN", 
 	TEAM_FULL: "TEAM_FULL", 
+	TEAM_ALREADY_EXISTS: "TEAM_ALREADY_EXISTS",
 	TEAM_DOES_NOT_EXIST: "TEAM_DOES_NOT_EXIST", 
 	CHECKOUT_INVALID_INDEX: "CHECKOUT_INVALID_INDEX",
 	USER_NOT_CHECKED_IN: "USER_NOT_CHECKED_IN",
 	USER_CHECKED_IN_MULTIPLE: "USER_CHECKED_IN_MULTIPLE", 
+	TEAM_HAS_CHECKINS: "TEAM_HAS_CHECKINS",
+	INVALID_TEAM_SETTING: "INVALID_TEAM_SETTING",
+}
+
+const TeamSetting = {
+	TEAM_ID: "teamid", 
+	SLOTS: "slots", 
+	NAME: "name", 
+	DESCRIPTION: "description", 
+	CHANNEL: "channel", 
 }
 
 module.exports = {
 	getTeamListData, 
 	getTeam, 
-	addOrUpdateTeam, 
+	addTeam, 
+	editTeam, 
+	editTeamSetting,
 	removeTeam, 
 	checkinTeam, 
 	checkoutTeam, 
 	clearTeam, 
 	TeamError,
+	TeamSetting,
 }

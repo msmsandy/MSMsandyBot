@@ -10,6 +10,7 @@ let TeamSchema = new mongoose.Schema({
 	name: { type: String }, 
 	description: { type: String },
 	slots: { type: Number }, 
+	channel: { type: String },
 	checkins: [CheckinSchema], 
 });
 
