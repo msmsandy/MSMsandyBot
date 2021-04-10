@@ -51,6 +51,9 @@ client.on('message', async (message) => {
         else if (command === 'team') {
             await client.commands.get('team').execute(message, prefix, args);
         }
+        else if (command === 'forge') {
+            client.commands.get('forge').execute(message, args); 
+        }
     } catch (err) {
         console.log(err);
         message.channel.send("Unhandled error: " + err);
