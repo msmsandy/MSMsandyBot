@@ -6,6 +6,10 @@ const forgeType = {
     inherit: {
         name: 'inherit',
         rate: 0.30,
+    }, 
+    any: {
+        name: 'any', 
+        rate: 0, 
     }
 };
 
@@ -19,23 +23,45 @@ function help(message) {
     message.channel.send(`${header}\n\n${forgeList}\n\n${howTo}`);
 }
 
-function mastercraft(message, type, bonus, name) {
+function successString(type, name) {
+    if (name === undefined) {
+        name = `nothing`; 
+    }
+    switch (type) {
+        case forgeType.necro: 
+            return `successfully crafted **necro ${name}**`; 
+        case forgeType.inherit: 
+            return `successfully crafted **ancient ${name}**`; 
+        case forgeType.any: 
+            return `passed **${name}**`; 
+    }
+}
+
+function failureString(type) {
+    switch (type) {
+        case forgeType.necro: 
+        case forgeType.inherit: 
+            return `crafting failed`; 
+        case forgeType.any: 
+            return `forging failed`; 
+    }
+}
+
+function forge(message, type, bonus, name) {
     let result = Math.random();
-    let successRate = type === forgeType.necro ? forgeType.necro.rate : forgeType.inherit.rate; 
+    let successRate = type.rate; 
 
     if (bonus) {
-        successRate += bonus / 100; 
+        successRate += Math.floor(bonus) / 100.0; 
     }
 
-    console.log(`mastercraft: ${result} <= ${successRate}, bonus: ${bonus}`);
     if (result <= successRate) {
-        const typeName = type === forgeType.necro ? 'necro' : 'ancient'; 
-
-        const resultName = name ? `${name}` : `nothing`; 
-        message.channel.send(`<@${message.author.id}> successfully crafted **${typeName} ${resultName}** with a success rate of ${successRate * 100}%`);
+        const string = successString(type, name); 
+        message.channel.send(`<@${message.author.id}> ${string} with a success rate of ${successRate * 100.0}%`);
     }
     else {
-        message.channel.send(`crafting failed with a success rate of ${successRate * 100}%`);
+        const string = failureString(type);
+        message.channel.send(`${string} with a success rate of ${successRate * 100}%`);
     }
 }
 
@@ -55,10 +81,13 @@ module.exports = {
         const name = args.join(' ');
 
         if (type === forgeType.necro.name) {
-            mastercraft(message, forgeType.necro, bonus, name);
+            forge(message, forgeType.necro, bonus, name);
         }
         else if (type === forgeType.inherit.name) {
-            mastercraft(message, forgeType.inherit, bonus, name);
+            forge(message, forgeType.inherit, bonus, name);
+        }
+        else if (type === forgeType.any.name) {
+            forge(message, forgeType.any, bonus, name);
         }
         else if (type === undefined) {
             message.reply(`wat u forging bro`);
