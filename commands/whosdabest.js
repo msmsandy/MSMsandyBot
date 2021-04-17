@@ -3,6 +3,7 @@ const { getDaBestData } = require('../src/dabest');
 module.exports = {
 	name: 'whosdabest', 
 	description: 'whosdabest', 
+    private: true,
 	async execute(message) {
         try {
     		let daBest = (await getDaBestData(message.guild.id)).user; 

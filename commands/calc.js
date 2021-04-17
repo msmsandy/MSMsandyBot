@@ -2,7 +2,7 @@ const moment = require('moment');
 const momentTz = require('moment-timezone'); // time 
 module.exports = {
 	name: 'calc', 
-	description: 'calc', 
+	description: 'calculate how much AB you need to charge. Currently only based on NA server time.', 
 	execute(message, prefix, command, args) {
 		function parseTime(s) {
 	        var c = s.split(':');

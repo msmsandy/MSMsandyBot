@@ -67,7 +67,7 @@ function forge(message, type, bonus, name) {
 
 module.exports = {
 	name: 'forge', 
-	description: 'forge', 
+	description: 'simulate forging', 
 	execute(message, args) {
         const type = args[0];
         args = args.slice(1);

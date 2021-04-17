@@ -574,7 +574,7 @@ async function mention(message, args) {
 
 module.exports = {
     name: 'team', 
-    description: 'Team', 
+    description: 'set up teams for checking into', 
     async execute(message, prefix, args) {
 
     	const firstArg = args[0]; 

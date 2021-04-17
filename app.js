@@ -54,6 +54,19 @@ client.on('message', async (message) => {
         else if (command === 'forge') {
             client.commands.get('forge').execute(message, args); 
         }
+        else if (command === 'help') {
+            let commandsStrings = []; 
+            client.commands.forEach( command => {
+                console.log(command);
+                if (!command.private) {
+                    let commandString = `\t\`${prefix}${command.name}\` - ${command.description}`;
+                    commandsStrings.push(commandString);
+                }
+            });
+            const commandsString = commandsStrings.join('\n');
+            const helpString = `**Commands**\nUse \`${prefix}command help\` for more info.\n\n${commandsString}\n\n*DISCLAIMER: This bot is currently in development. Should you find any issues or have any feedback, please contact **msm_sandy#6666***`;
+            message.channel.send(helpString);
+        }
     } catch (err) {
         console.log(err);
         message.channel.send("Unhandled error: " + err);

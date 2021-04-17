@@ -192,7 +192,7 @@ async function resetEntries(message) {
 
 module.exports = {
     name: 'fame', 
-    description: 'Popularity contest', 
+    description: 'Popularity contest. enter to win fame from everyone else who enters.',
     async execute(message, prefix, args) {
         try {
             console.log('Fame: ' + message.content);
