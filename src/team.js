@@ -69,7 +69,7 @@ async function editTeam(guildId, teamId, slots, channel, name, description) {
 		const teamList = await getTeamListData(guildId); 
 		let existingTeam = teamList.teams.find(team => team.id === teamId); 
 		if (existingTeam !== undefined) {
-			if (existingTeam.checkins.length !== 0) {
+			if (existingTeam.checkins.length > slots) {
 				throw TeamError.TEAM_HAS_CHECKINS; 
 			}
 			existingTeam.name = name; 
@@ -102,7 +102,7 @@ async function editTeamSetting(setting, guildId, teamId, value) {
 				existingTeam.id = value; 
 			}
 			else if (setting === TeamSetting.SLOTS) {
-				if (existingTeam.checkins.length !== 0) {
+				if (existingTeam.checkins.length > value) {
 					throw TeamError.TEAM_HAS_CHECKINS; 
 				}
 				oldValue = existingTeam.slots; 

@@ -611,7 +611,7 @@ async function mention(message, args) {
 			message.channel.send(`there's no one to mention in \`${teamId}\``);
 		}
 		else {
-			let messageText = userTexts.join(', ') + ': ' + mentionMessage;  
+			let messageText = `${mentionMessage}\n\n${userTexts.join(', ')}`;
 			message.channel.send(messageText);
 		}
 	} catch (err) {
