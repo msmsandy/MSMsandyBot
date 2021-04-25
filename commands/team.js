@@ -78,6 +78,8 @@ function help(message, prefix) {
 
 async function view(message, arg) {
 	try {
+		const sort = (team1, team2) => (team1.id.toLowerCase() < team2.id.toLowerCase()) ? -1 : 1;  
+		
 		if (arg === 'all') {
 			await message.reply(`do you really wish to view \`all\` teams? this will list all teams from all channels. maybe you wanted to view \`here\` which will list all teams within this channel.\nreply with what you want to continue with: \`all\` or \`here\``);
 			let filter = m => m.author.id === message.author.id;
@@ -90,7 +92,7 @@ async function view(message, arg) {
 	        if (responseMessage.content === 'all') {
 	        	const title = `teams`;
 	        	const description = `all teams in the server`;
-				const embed = await getTeamsEmbed(message.guild, null, title, description, Format.FormatStyle.full);
+				const embed = await getTeamsEmbed(message.guild, null, sort, title, description, Format.FormatStyle.full);
 				message.channel.send(embed);
 			}
 			else if (responseMessage.content === 'here') {
@@ -103,14 +105,15 @@ async function view(message, arg) {
 		else if (arg === 'list') {
 			const title = `teams`;
         	const description = `all teams in the server`;
-			const embed = await getTeamsEmbed(message.guild, null, title, description, Format.FormatStyle.inline);
+			const embed = await getTeamsEmbed(message.guild, null, sort, title, description, Format.FormatStyle.inline);
 			message.channel.send(embed);
 		}
 		else if (arg === 'here') {
 			const filter = team => team.channel === message.channel.id; 
+			 
 			const title = `teams`;
 	        const description = `all teams in <#${message.channel.id}>`;
-			const embed = await getTeamsEmbed(message.guild, filter, title, description, Format.FormatStyle.full);
+			const embed = await getTeamsEmbed(message.guild, filter, sort, title, description, Format.FormatStyle.full);
 			message.channel.send(embed);
 		}
 		else if (arg !== undefined) {
@@ -164,11 +167,15 @@ async function getTeamEmbed(guild, teamId) {
 	}
 }
 
-async function getTeamsEmbed(guild, filter = null, title, description, style) {
+async function getTeamsEmbed(guild, filter = null, sortFunction = null, title, description, style) {
 	try {
 		let teams = (await getTeamListData(guild.id)).teams; 
 		if (filter) {
 			teams = teams.filter(filter);
+		}
+		if (sortFunction) {
+			console.log("sorted" + teams);
+			teams.sort(sortFunction);
 		}
 
 		// for each team, get field 
@@ -566,7 +573,7 @@ async function clear(message, args) {
 			filter = team => team.channel === message.channel.id; 
 		}
 		else {
-			filter = team => team.id === arg; 
+			filter = team => team.id.toLowerCase() === arg.toLowerCase(); 
 		}
 		const teams = await clearTeam(message.guild.id, filter);
 		message.channel.send(`team${teams.length > 1 ? 's' : ''} cleared`);

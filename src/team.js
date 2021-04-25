@@ -24,7 +24,7 @@ async function getTeamListData(guildId) {
 async function getTeam(guildId, teamId) {
 	try {
 		const teamList = await getTeamListData(guildId); 
-		const team = teamList.teams.find(team => team.id === teamId); 
+		const team = teamList.teams.find(team => team.id.toLowerCase() === teamId.toLowerCase()); 
 		if (team) {
 			return team; 
 		} 
@@ -41,7 +41,7 @@ async function addTeam(guildId, teamId, slots, channel, name, description) {
 	try {
 		const teamList = await getTeamListData(guildId); 
 		
-		let existingTeam = teamList.teams.find(team => team.id === teamId); 
+		let existingTeam = teamList.teams.find(team => team.id.toLowerCase() === teamId.toLowerCase()); 
 
 		if (existingTeam !== undefined) {
 			throw TeamError.TEAM_ALREADY_EXISTS;
@@ -67,7 +67,7 @@ async function addTeam(guildId, teamId, slots, channel, name, description) {
 async function editTeam(guildId, teamId, slots, channel, name, description) {
 	try {
 		const teamList = await getTeamListData(guildId); 
-		let existingTeam = teamList.teams.find(team => team.id === teamId); 
+		let existingTeam = teamList.teams.find(team => team.id.toLowerCase() === teamId.toLowerCase()); 
 		if (existingTeam !== undefined) {
 			if (existingTeam.checkins.length > slots) {
 				throw TeamError.TEAM_HAS_CHECKINS; 
@@ -90,12 +90,12 @@ async function editTeamSetting(setting, guildId, teamId, value) {
 	try {
 		 
 		const teamList = await getTeamListData(guildId); 
-		let existingTeam = teamList.teams.find(team => team.id === teamId); 
+		let existingTeam = teamList.teams.find(team => team.id.toLowerCase() === teamId.toLowerCase()); 
 		if (existingTeam !== undefined) {
 			let oldValue;
 			if (setting === TeamSetting.TEAM_ID) {
 				// validate that it doesn't already exist 
-				if(teamList.teams.find(team => team.id === value)) {
+				if(teamList.teams.find(team => team.id.toLowerCase() === value.toLowerCase())) {
 					throw TeamError.TEAM_ALREADY_EXISTS; 
 				}
 				oldValue = existingTeam.id; 
@@ -139,7 +139,7 @@ async function removeTeam(guildId, teamId) {
 		const teamList = await getTeamListData(guildId); 
 		const teams = teamList.teams; 
 
-		const existingTeamIndex = teams.findIndex(team => team.id === teamId); 
+		const existingTeamIndex = teams.findIndex(team => team.id.toLowerCase() === teamId.toLowerCase()); 
 		if (existingTeamIndex !== -1) {
 			const existingTeam = teams[existingTeamIndex]; 
 
@@ -164,7 +164,7 @@ async function checkinTeam(guildId, teamId, user, checkinText) {
 	console.log('checkinTeam');
 	try {
 		const teamList = await getTeamListData(guildId); 
-		const team = teamList.teams.find(team => team.id === teamId); 
+		const team = teamList.teams.find(team => team.id.toLowerCase() === teamId.toLowerCase()); 
 
 		if (team) {
 			const userCheckin = team.checkins.find(checkin => checkin.user === user && checkin.checkinText === checkinText); 
@@ -199,7 +199,7 @@ async function checkoutTeam(guildId, teamId, user, number) {
 
 	try {
 		const teamList = await getTeamListData(guildId); 
-		const team = teamList.teams.find(team => team.id === teamId); 
+		const team = teamList.teams.find(team => team.id.toLowerCase() === teamId.toLowerCase()); 
 
 		if (team) {
 			if (number !== undefined) {
