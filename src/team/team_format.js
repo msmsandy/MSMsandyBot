@@ -1,9 +1,8 @@
 const Discord = require('discord.js');
 
 const FormatStyle = {
-	inline: "inline",
-	compact: "compact", 
-	full: "full",
+	view: "view", 
+	list: "list", 
 }
 
 async function checkinString(guild, checkin) {
@@ -26,24 +25,38 @@ async function checkinString(guild, checkin) {
 }
 
 async function teamField(guild, team, style) {
-	let checkinStrings = [];
-	for (let i = 0; i < team.slots; i++) {
-		const checkin = team.checkins[i]
-		let string; 
-		if (checkin) {
-			string = await checkinString(guild, checkin);
-		}
-		checkinStrings.push(`${i+1}. ${string ? string : ''}`);
-	}
-
 	let name = '** **'; 
-	let value = checkinStrings.join('\n');
+	let value; 
 	let inline = false; 
-	if (style === FormatStyle.full || style === FormatStyle.inline) {
-		if (style === FormatStyle.inline) {
-			checkinStrings = [];
+
+	if (style === FormatStyle.list) {
+		name = `\`${team.id}\``;
+		if (team.name) {
+			name += `: ${team.name}`;
 		}
 
+		let description = ''; 
+		if (team.description) {
+			description += `${team.description}`;
+		}
+		description += ` \`(${team.slots})\``;
+		if (team.channel) {
+			description += ` <#${team.channel}>`;
+		}
+		value = description;
+
+		inline = true;
+	}
+	else {
+		let valueStrings = [];
+		for (let i = 0; i < team.slots; i++) {
+			const checkin = team.checkins[i]
+			let string; 
+			if (checkin) {
+				string = await checkinString(guild, checkin);
+			}
+			valueStrings.push(`${i+1}. ${string ? string : ''}`);
+		}
 		name = `\`${team.id}\``;
 		if (team.name) {
 			name += `: ${team.name}`;
@@ -57,11 +70,10 @@ async function teamField(guild, team, style) {
 		}
 
 		if (description.length > 0) {
-			checkinStrings.unshift(`${description}\n`);
+			valueStrings.unshift(`${description}\n`);
 		}
 
-		value = checkinStrings.join('\n'); 
-
+		value = valueStrings.join('\n');
 		inline = true; 
 	}
 
@@ -73,49 +85,7 @@ async function teamField(guild, team, style) {
 	return field;
 }
 
-function teamHeading(team) {
-	let text = `\`${team.id}\``;
-	if (team.name) {
-		text += `: **${team.name}**`;
-	}
-	if (team.channel) {
-		text += ` in <#${team.channel}>`; 
-	}
-	if (team.description) {
-		text += `\n\t${team.description}`; 
-	}
-	return text; 
-}
-
-async function teamItem(guild, team, style) {
-	if (style === FormatStyle.inline) {
-		let text = `- \`${team.id}\``;
-		if (team.name) {
-			text += `: ${team.name}`;
-		}
-		if (team.channel) {
-			text += ` <#${team.channel}>`;
-		}
-		return text;
-	}
-	else if (style === FormatStyle.full) {
-		let heading = teamHeading(team);
-		let checkinsText = []; 
-
-		for (let i = 0; i < team.slots; i++) {
-			const checkin = team.checkins[i]; 
-			let checkinText = ''; 
-			if (checkin) {
-				checkinText = await checkinString(guild, checkin);
-			}
-			checkinsText.push(`${i+1}. ${checkinText}`);
-		}
-		return `${heading}\n\`\`\`${checkinsText.join('\n')}\`\`\``
-	}
-}
-
 module.exports = {
 	FormatStyle,
-	teamItem, 
 	teamField, 
 };

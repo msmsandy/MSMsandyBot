@@ -15,11 +15,18 @@ const {
 
 const Format = require('../src/team/team_format');
 
+const { view, list, viewType } = require('../src/team/team_view');
+
 const argumentType = {
+	list: {
+		command: 'list', 
+		arguments: '`teamid | here | all`',
+		description: 'show details of team(s)',
+	},
 	view: {
 		command: 'view', 
-		arguments: '`teamid | here | list | all`',
-		description: 'view teams',
+		arguments: '`teamid | here | all`',
+		description: 'show details of team(s) with checkins',
 	},
 	add: {
 		command: 'newteam', 
@@ -74,178 +81,6 @@ function help(message, prefix) {
     message.channel.send(description + '\n' + commandsString);
 }
 
-// View 
-
-async function view(message, arg) {
-	try {
-		const sort = (team1, team2) => (team1.id.toLowerCase() < team2.id.toLowerCase()) ? -1 : 1;  
-		
-		if (arg === 'all') {
-			await message.reply(`do you really wish to view \`all\` teams? this will list all teams from all channels. maybe you wanted to view \`here\` which will list all teams within this channel.\nreply with what you want to continue with: \`all\` or \`here\``);
-			let filter = m => m.author.id === message.author.id;
-			let responseMessage = await message.channel.awaitMessages(filter, {
-	            max: 1,
-	            time: 30000,
-	            errors: ['time']
-	        });
-	        responseMessage = responseMessage.first(); 
-	        if (responseMessage.content === 'all') {
-	        	const title = `teams`;
-	        	const description = `all teams in the server`;
-				const embed = await getTeamsEmbed(message.guild, null, sort, title, description, Format.FormatStyle.full);
-				message.channel.send(embed);
-			}
-			else if (responseMessage.content === 'here') {
-				await view(message, 'here');
-			}
-			else {
-				message.reply('that\'s not what i asked for');
-			}
-		}
-		else if (arg === 'list') {
-			const title = `teams`;
-        	const description = `all teams in the server`;
-			const embed = await getTeamsEmbed(message.guild, null, sort, title, description, Format.FormatStyle.inline);
-			message.channel.send(embed);
-		}
-		else if (arg === 'here') {
-			const filter = team => team.channel === message.channel.id; 
-			 
-			const title = `teams`;
-	        const description = `all teams in <#${message.channel.id}>`;
-			const embed = await getTeamsEmbed(message.guild, filter, sort, title, description, Format.FormatStyle.full);
-			message.channel.send(embed);
-		}
-		else if (arg !== undefined) {
-			const embed = await getTeamEmbed(message.guild, arg);
-			message.channel.send(embed); 
-		}
-		else {
-			message.reply('you didn\'t specify what you wanna view, dingus');
-		}
-	} catch (err) {
-		if (err == TeamError.TEAM_DOES_NOT_EXIST) {
-			const filter = team => team.channel === message.channel.id;
-			const teamsText = await getTeamsText(message.guild, formatTeamNamesText, filter);
-			message.channel.send(`\`${arg}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
-		}
-		else {
-			throw err; 
-		}
-	}
-}
-
-async function getTeamEmbed(guild, teamId) {
-	try {
-		const team = (await getTeam(guild.id, teamId)); 
-		if (team) {
-			let title = `\`${team.id}\``;
-			let description = '';
-			let field = await Format.teamField(guild, team, Format.FormatStyle.compact);
-
-			if (team.name) {
-				title += `: ${team.name}`;
-			}
-			if (team.description) {
-				description = `${team.description}`;
-			}
-
-			let embed = new Discord.MessageEmbed()
-				.setTitle(title)
-				.setDescription(description); 
-			if (field) {
-				embed.addFields([field]);
-			}
-
-			return embed;
-		}
-		else {
-			throw TeamError.TEAM_DOES_NOT_EXIST; 
-		}
-	} catch (err) {
-		throw err; 
-	}
-}
-
-async function getTeamsEmbed(guild, filter = null, sortFunction = null, title, description, style) {
-	try {
-		let teams = (await getTeamListData(guild.id)).teams; 
-		if (filter) {
-			teams = teams.filter(filter);
-		}
-		if (sortFunction) {
-			console.log("sorted" + teams);
-			teams.sort(sortFunction);
-		}
-
-		// for each team, get field 
-		let fields = [];
-		for (const team of teams) {
-			const field = await Format.teamField(guild, team, style);
-			fields.push(field);
-		}
-
-		let embed = new Discord.MessageEmbed()
-			.setTitle(title)
-			.setDescription(description); 
-		if (fields.length > 0) {
-			embed.addFields(fields);
-		}
-		else {
-			embed.addField('no teams', '** **');
-		}
-		return embed;
-	} catch (err) {
-		throw err; 
-	}
-}
-
-async function getTeamsText(guild, formatText, filter = null) {
-	try {
-		// TODO: sort by channel 
-		let teams = (await getTeamListData(guild.id)).teams; 
-		if (filter) {
-			teams = teams.filter(filter);
-		}
-		let teamsText = []; 
-		for (const team of teams) {
-			console.log('team' + team.slots);
-			const teamText = await formatText(guild, team);
-			teamsText.push(teamText);
-		}
-		if (teamsText.length === 0) {
-			return '```no teams```'; 
-		}
-		else {
-			return teamsText.join('\n');
-		}
-	} catch (err) {
-		throw err; 
-	}
-}
-
-async function getTeamText(guild, teamId) {
-	try {
-		const team = (await getTeam(guild.id, teamId)); 
-		if (team) {
-			return await formatTeamText(guild, team);
-		}
-		else {
-			throw TeamError.TEAM_DOES_NOT_EXIST; 
-		}
-	} catch (err) {
-		throw err; 
-	}
-}
-
-async function formatTeamText(guild, team) {
-	return await Format.teamItem(guild, team, Format.FormatStyle.full);
-}
-
-async function formatTeamNamesText(guild, team) {
-	return await Format.teamItem(guild, team, Format.FormatStyle.inline); 
-}
-
 // Add 
 
 async function updateTeam(message, args, isNew) {
@@ -297,17 +132,16 @@ async function updateTeam(message, args, isNew) {
 			} 
 			else {
 				await editTeamAll(message.guild, teamId, slots, channel, name, description); 
-				const teamText = await getTeamText(message.guild, teamId); 
-				message.channel.send(`updated team\n${teamText}`);
+				const msg = `updated team`;
+				const embed = await list(message, teamId);
+				message.channel.send(msg, { embed: embed });
 			}
 		} catch (err) {
 			if (err === TeamError.TEAM_ALREADY_EXISTS) {
 				message.channel.send(`\`${teamId}\` already exists. please use the \`edit\` command`); 
 			}
 			else if (err === TeamError.TEAM_DOES_NOT_EXIST) {
-				const filter = team => team.channel === message.channel.id;
-				const teamsText = await getTeamsText(message.guild, formatTeamNamesText, filter);
-				message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+				throw { key: err, teamId: teamId }; 
 			}
 			else {
 				throw err; 
@@ -411,9 +245,7 @@ async function edit(message, args) {
 		}
 	} catch (err) {
 		if (err === TeamError.TEAM_DOES_NOT_EXIST) {
-			const filter = team => team.channel === message.channel.id;
-			const teamsText = await getTeamsText(message.guild, formatTeamNamesText, filter);
-			message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+			throw { key: err, teamId: teamId }; 
 		}
 		else if (err === TeamError.TEAM_HAS_CHECKINS) {
 			message.channel.send(`\`${teamId}\` has checkins. clear it before you try to do anything else.`);
@@ -453,9 +285,7 @@ async function deleteTeam(message, teamId) {
 		}
 	} catch (err) {
 		if (err === TeamError.TEAM_DOES_NOT_EXIST) {
-			const filter = team => team.channel === message.channel.id;
-			const teamsText = await getTeamsText(message.guild, formatTeamNamesText, filter);
-			message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+			throw { key: err, teamId: teamId }; 
 		}
 		else if (err === TeamError.TEAM_HAS_CHECKINS) {
 			message.channel.send(`\`${teamId}\` has checkins. clear the team before deleting.`);
@@ -496,17 +326,17 @@ async function checkin(message, args) {
 		await view(message, teamId);
 	} catch (err) {
 		if (err === TeamError.USER_ALREADY_CHECKED_IN) {
-			const teamText = await getTeamText(message.guild, teamId); 
-			message.channel.send(`already checked into \`${teamId}\`, loser\n\n${teamText}`);
+			const msg = `already checked into \`${teamId}\`, loser`;
+			const embed = await view(message, teamId);
+			message.channel.send(msg, { embed: embed });
 		}
 		else if (err === TeamError.TEAM_FULL) {
-			const teamText = await getTeamText(message.guild, teamId); 
-			message.channel.send(`\`${teamId}\` is full sucks for you haha\n\n${teamText}`);
+			const msg = `\`${teamId}\` is full sucks for you haha`;
+			const embed = await view(message, teamId);
+			message.channel.send(msg, { embed: embed });
 		}
 		else if (err === TeamError.TEAM_DOES_NOT_EXIST) {
-			const filter = team => team.channel === message.channel.id;
-			const teamsText = await getTeamsText(message.guild, formatTeamNamesText, filter);
-			message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+			throw { key: err, teamId: teamId }; 
 		}
 		else {
 			throw err; 
@@ -541,15 +371,15 @@ async function checkout(message, args) {
 			message.channel.send(`you're not checked into \`${teamId}\` ya noob`);
 		}
 		else if (err === TeamError.USER_CHECKED_IN_MULTIPLE) {
-			message.channel.send(`you checked into \`${teamId}\` multiple times. please specify the number`);
+			const msg = `you checked into \`${teamId}\` multiple times. please specify the number`;
+			const embed = await view(message, teamId);
+			message.channel.send(msg, { embed: embed });
 		}
 		else if (err === TeamError.CHECKOUT_INVALID_INDEX) {
 			message.channel.send(`that number aint valid bro`);
 		}
 		else if (err === TeamError.TEAM_DOES_NOT_EXIST) {
-			const filter = team => team.channel === message.channel.id;
-			const teamsText = await getTeamsText(message.guild, formatTeamNamesText, filter);
-			message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+			throw { key: err, teamId: teamId }; 
 		}
 		else {
 			throw err; 
@@ -579,9 +409,7 @@ async function clear(message, args) {
 		message.channel.send(`team${teams.length > 1 ? 's' : ''} cleared`);
 	} catch (err) {
 		if (err === TeamError.TEAM_DOES_NOT_EXIST) {
-			const filter = team => team.channel === message.channel.id;
-			const teamsText = await getTeamsText(message.guild, formatTeamNamesText, filter);
-			message.channel.send(`\`${arg}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+			throw { key: err, teamId: arg }; 
 		}
 		else {
 			throw err; 
@@ -623,13 +451,21 @@ async function mention(message, args) {
 		}
 	} catch (err) {
 		if (err === TeamError.TEAM_DOES_NOT_EXIST) {
-			const filter = team => team.channel === message.channel.id;
-			const teamsText = await getTeamsText(message.guild, formatTeamNamesText, filter);
-			message.channel.send(`\`${teamId}\` does not exist. check the team id you're using.\n\nTeams:\n${teamsText}`); 
+			throw { key: err, teamId: teamId}; 
 		}
 		else {
 			throw err; 
 		}
+	}
+}
+
+async function handleTeamDoesNotExist(message, teamId) {
+	try {
+		const msg = `\`${teamId}\` does not exist. check the team id you're using.`;
+		const embed = await list(message, viewType.here);
+		message.channel.send(msg, { embed: embed });
+	} catch (err) {
+		throw err; 
 	}
 }
 
@@ -646,6 +482,9 @@ module.exports = {
     		}
 	    	else if (firstArg === argumentType.view.command) {
 	    		await view(message, args[1]);
+	    	}
+	    	else if (firstArg === argumentType.list.command) {
+	    		await list(message, args[1]);
 	    	}
 	    	else if (firstArg === argumentType.add.command) {
 	    		await updateTeam(message, args.slice(1), true);
@@ -672,7 +511,12 @@ module.exports = {
 	    		message.reply('wtf u doin');
 	    	}
     	} catch (err) {
-    		throw err; 
+    		if (err.key === TeamError.TEAM_DOES_NOT_EXIST && err.teamId) {
+				handleTeamDoesNotExist(message, err.teamId);
+			}
+			else {
+    			throw err; 
+			}
     	}
     }
 };
