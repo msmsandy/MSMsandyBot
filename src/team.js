@@ -13,10 +13,10 @@ async function getTeamListData(guildId) {
 			{ upsert: true, new: true, runValidators: true },
 		);
 
-		console.log(data);
+		// console.log(data);
 		return data; 
 	} catch (err) {
-		console.error(err);
+		// console.error(err);
 		throw err; 
 	}
 }
@@ -143,14 +143,9 @@ async function removeTeam(guildId, teamId) {
 		if (existingTeamIndex !== -1) {
 			const existingTeam = teams[existingTeamIndex]; 
 
-			if (existingTeam.checkins.length === 0) {
-				teams.splice(existingTeamIndex, 1); 
-				await teamList.save(); 
-				return existingTeam; 
-			}
-			else {
-				throw TeamError.TEAM_HAS_CHECKINS;
-			}
+			teams.splice(existingTeamIndex, 1); 
+			await teamList.save(); 
+			return existingTeam;
 		}
 		else {
 			return TeamError.TEAM_DOES_NOT_EXIST; 
@@ -161,7 +156,6 @@ async function removeTeam(guildId, teamId) {
 }
 
 async function checkinTeam(guildId, teamId, user, checkinText) {
-	console.log('checkinTeam');
 	try {
 		const teamList = await getTeamListData(guildId); 
 		const team = teamList.teams.find(team => team.id.toLowerCase() === teamId.toLowerCase()); 
@@ -195,8 +189,6 @@ async function checkinTeam(guildId, teamId, user, checkinText) {
 }
 
 async function checkoutTeam(guildId, teamId, user, number) {
-	console.log('checkoutTeam ' + teamId + user + number); 
-
 	try {
 		const teamList = await getTeamListData(guildId); 
 		const team = teamList.teams.find(team => team.id.toLowerCase() === teamId.toLowerCase()); 
@@ -237,8 +229,6 @@ async function checkoutTeam(guildId, teamId, user, number) {
 }
 
 async function clearTeam(guildId, filter) {
-	console.log('clearTeam'); 
-
 	try {
 		const teamList = await getTeamListData(guildId); 
 		const teams = teamList.teams.filter(filter); 
@@ -265,7 +255,7 @@ const TeamError = {
 	USER_CHECKED_IN_MULTIPLE: "USER_CHECKED_IN_MULTIPLE", 
 	TEAM_HAS_CHECKINS: "TEAM_HAS_CHECKINS",
 	INVALID_TEAM_SETTING: "INVALID_TEAM_SETTING",
-}
+};
 
 const TeamSetting = {
 	TEAM_ID: "teamid", 
@@ -273,7 +263,7 @@ const TeamSetting = {
 	NAME: "name", 
 	DESCRIPTION: "description", 
 	CHANNEL: "channel", 
-}
+};
 
 module.exports = {
 	getTeamListData, 
@@ -287,4 +277,4 @@ module.exports = {
 	clearTeam, 
 	TeamError,
 	TeamSetting,
-}
+};

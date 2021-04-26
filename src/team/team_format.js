@@ -11,7 +11,6 @@ async function checkinString(guild, checkin) {
 		const member = await guild.members.fetch(checkin.user); 
 		displayName = `${member.displayName}`; 
 	} catch (err) {
-		console.log(err);
 		displayName = `${checkin.user}`; 
 	}
 	let checkinUserText = ''; 
