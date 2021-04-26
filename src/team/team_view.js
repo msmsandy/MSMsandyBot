@@ -45,7 +45,7 @@ async function view(message, arg) {
 			message.channel.send(embed);
 		}
 		else if (arg !== undefined) {
-			const filter = team => team.id === arg;
+			const filter = team => team.id.toLowerCase() === arg.toLowerCase();
 			const title = `team`; 
 			const description = ``; 
 			const embed = await getTeamsEmbed(message.guild, filter, alphabeticalSort, title, description, Format.FormatStyle.view, true);
@@ -86,7 +86,7 @@ async function list(message, arg) {
 	        filter = channelFilter(message); 
 		}
 		else if (arg !== undefined) {
-			filter = team => team.id === arg; 
+			filter = team => team.id.toLowerCase() === arg.toLowerCase(); 
 			description = arg;  
 
 			title = `team`; 
