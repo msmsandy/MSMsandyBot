@@ -10,15 +10,20 @@ const clearType = {
 	here: 'here',
 };
 
-async function checkin(message, args) {
+async function checkin(message, args, isOther) {
 	const teamId = args[0];
 	if (!teamId || teamId.length === 0) {
 		message.channel.send('u didnt give me a team id');
 		return;
 	}
 
+	if (isOther && !args[1]) {
+		message.channel.send('who else u checkin in brah');
+		return; 
+	}
+
 	let user; 
-	if (args[1] && args[1].startsWith('<@') && args[1].endsWith('>')) {
+	if (isOther && args[1].startsWith('<@') && args[1].endsWith('>')) {
 		user = args[1].slice(2, -1); 
 		if (user.startsWith('!')) {
 			user = user.slice(1);
@@ -33,9 +38,18 @@ async function checkin(message, args) {
 	const checkinText = args.join(' ').trim();
 
 	try {
-		await checkinTeam(message.guild.id, teamId, user, checkinText);
+		const isUpdate = await checkinTeam(message.guild.id, teamId, user, checkinText, isOther);
 
-		const msg = `successfully checked into \`${teamId}\``;
+		let msg = `successfully checked into \`${teamId}\``;
+		if (isUpdate) {
+			msg = `already checked into \`${teamId}\``;
+			if (checkinText.length > 0) {
+				msg += `, with \`${checkinText}\``;
+			}
+			else {
+				msg += `, no description`;
+			}
+		}
 		const embed = await view(message, teamId);
 		message.channel.send(msg, { embed: embed });
 	} catch (err) {
@@ -83,12 +97,17 @@ async function checkout(message, args) {
 			message.channel.send(`you're not checked into \`${teamId}\` ya noob`);
 		}
 		else if (err === TeamError.USER_CHECKED_IN_MULTIPLE) {
-			const msg = `you checked into \`${teamId}\` multiple times. please specify the number of the checkin`;
+			const msg = `you checked into \`${teamId}\` multiple times. specify the number of the checkin to checkout`;
+			const embed = await view(message, teamId);
+			message.channel.send(msg, { embed: embed });
+		}
+		else if (err === TeamError.USER_CHECKED_IN_OTHER) {
+			const msg = `you checked into \`${teamId}\` using \`checkinother\`. specify the number of the checkin to checkout`;
 			const embed = await view(message, teamId);
 			message.channel.send(msg, { embed: embed });
 		}
 		else if (err === TeamError.CHECKOUT_INVALID_INDEX) {
-			message.channel.send(`that number aint valid bro`);
+			message.channel.send(`that checkout number aint valid bro`);
 		}
 		else if (err === TeamError.TEAM_DOES_NOT_EXIST) {
 			throw { key: err, teamId: teamId }; 

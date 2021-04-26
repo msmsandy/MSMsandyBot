@@ -46,8 +46,13 @@ const argumentType = {
 	}, 
 	checkin: {
 		command: 'checkin', 
+		arguments: '`teamid` `<optional: description>`', 
+		description: 'checkin to team with teamid. checking in again with a new description will update the description. only a max of 1 checkin per user can exist.',
+	}, 
+	checkinother: {
+		command: 'checkinother', 
 		arguments: '`teamid` `<optional: @user>` `<optional: description>`', 
-		description: 'checkin to team with teamid. checking in another user will tie that user to the checkin',
+		description: 'checkin someone else to team with teamid. providing an @user will tie that user to the checkin for mentions. every checkinother will create a new checkin',
 	}, 
 	checkout: {
 		command: 'checkout',
@@ -117,7 +122,10 @@ module.exports = {
 	    		await remove(message, args[1]);
 	    	}
 	    	else if (firstArg === argumentType.checkin.command) {
-	    		await checkin(message, args.slice(1));
+	    		await checkin(message, args.slice(1), false);
+	    	}
+	    	else if (firstArg === argumentType.checkinother.command) {
+	    		await checkin(message, args.slice(1), true);
 	    	}
 	    	else if (firstArg === argumentType.checkout.command) {
 	    		await checkout(message, args.slice(1));

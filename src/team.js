@@ -155,24 +155,30 @@ async function removeTeam(guildId, teamId) {
 	}
 }
 
-async function checkinTeam(guildId, teamId, user, checkinText) {
+async function checkinTeam(guildId, teamId, user, checkinText, isOther) {
 	try {
 		const teamList = await getTeamListData(guildId); 
 		const team = teamList.teams.find(team => team.id.toLowerCase() === teamId.toLowerCase()); 
 
 		if (team) {
-			const userCheckin = team.checkins.find(checkin => checkin.user === user && checkin.checkinText === checkinText); 
-			if (userCheckin) {
-				throw TeamError.USER_ALREADY_CHECKED_IN; 
+			const userSelfCheckin = team.checkins.find(checkin => checkin.user === user && !checkin.isOther); 
+
+			// if user already self check in, update description 
+			if (userSelfCheckin && !isOther) {
+				userSelfCheckin.checkinText = checkinText; 
+				await teamList.save();
+				return true;
 			}
 			else if (team.checkins.length < team.slots) {
 				const checkin = Checkin({
 					user: user, 
 					checkinText: checkinText, 
+					isOther: isOther,
 				});
 				team.checkins.push(checkin);
 
 				await teamList.save();
+				return false;
 			}
 			else {
 				throw TeamError.TEAM_FULL; 
@@ -199,12 +205,22 @@ async function checkoutTeam(guildId, teamId, user, number) {
 				// find index and delete 
 				if (0 <= index && index < team.checkins.length) {
 					team.checkins.splice(index, 1); 
+					await teamList.save();
 				} 
 				else {
 					throw TeamError.CHECKOUT_INVALID_INDEX; 
 				}
 			}
 			else {
+				const selfCheckinFilter = checkin => checkin.user === user && !checkin.isOther; 
+				const userSelfCheckin = team.checkins.find(selfCheckinFilter); 
+				if (userSelfCheckin) {
+					const checkinIndex = team.checkins.findIndex(selfCheckinFilter); 
+					team.checkins.splice(checkinIndex, 1);
+					await teamList.save();
+					return; 
+				}
+
 				// find all user checkins 
 				const usersCheckins = team.checkins.filter(checkin => checkin.user === user); 
 				if (usersCheckins.length === 0) {
@@ -214,15 +230,13 @@ async function checkoutTeam(guildId, teamId, user, number) {
 					throw TeamError.USER_CHECKED_IN_MULTIPLE; 
 				}	
 				else {
-					const checkinIndex = team.checkins.findIndex(checkin => checkin.user === user); 
-					team.checkins.splice(checkinIndex, 1); 
+					throw TeamError.USER_CHECKED_IN_OTHER; 
 				}
 			}
 		}
 		else {
 			throw TeamError.TEAM_DOES_NOT_EXIST; 
 		}
-		await teamList.save();
 	} catch (err) {
 		throw err; 
 	}
@@ -253,6 +267,7 @@ const TeamError = {
 	CHECKOUT_INVALID_INDEX: "CHECKOUT_INVALID_INDEX",
 	USER_NOT_CHECKED_IN: "USER_NOT_CHECKED_IN",
 	USER_CHECKED_IN_MULTIPLE: "USER_CHECKED_IN_MULTIPLE", 
+	USER_CHECKED_IN_OTHER: "USER_CHECKED_IN_OTHER",
 	TEAM_HAS_CHECKINS: "TEAM_HAS_CHECKINS",
 	INVALID_TEAM_SETTING: "INVALID_TEAM_SETTING",
 };

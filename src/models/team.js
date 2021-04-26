@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 let CheckinSchema = new mongoose.Schema({
 	user: { type: String }, 
 	checkinText: { type: String }, 
+	isOther: { type: Boolean },
 });
 
 let TeamSchema = new mongoose.Schema({
