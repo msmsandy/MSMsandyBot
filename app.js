@@ -1,6 +1,7 @@
 const fs = require('fs');
 const Discord = require('discord.js'); 
 const keep_alive = require('./keep_alive.js');
+const cron = require('node-cron');
 require('dotenv').config(); 
 
 // bot client 
@@ -75,6 +76,10 @@ client.on('message', async (message) => {
 
 process.on('unhandledRejection', (reason, promise) => {
     console.log('Unhandled Rejection at:', reason.stack || reason);
+});
+
+cron.schedule('* * * * *', function() {
+  console.log('running a task every minute');
 });
 
 // login 
