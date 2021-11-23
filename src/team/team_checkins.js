@@ -42,12 +42,12 @@ async function checkin(message, args, isOther) {
 
 		let msg = `successfully checked into \`${teamId}\``;
 		if (isUpdate) {
-			msg = `already checked into \`${teamId}\``;
+			msg = `you were already checked into \`${teamId}\`, description: `;
 			if (checkinText.length > 0) {
-				msg += `, now checked in with \`${checkinText}\``;
+				msg += `\`${checkinText}\``;
 			}
 			else {
-				msg += `, now checked in with no description`;
+				msg += `none`;
 			}
 		}
 		const embed = await view(message, teamId);
