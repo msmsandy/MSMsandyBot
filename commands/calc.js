@@ -24,7 +24,7 @@ module.exports = {
             let minute = splitTime[1]
 
             if (!isNaN(hour) && !isNaN(minute) && hour < 24 && minute < 60) {
-                let currentTime = moment().tz('America/Anchorage').format('HH:mm'); 
+                let currentTime = moment().tz('America/Los_Angeles').format('HH:mm'); 
 
                 let parsedInputtedTime = parseTime(args[0]); 
                 let parsedCurrentTime = parseTime(currentTime); 
@@ -33,6 +33,11 @@ module.exports = {
                     parsedInputtedTime = parsedInputtedTime + 1440; 
                 } 
                 let minutes = Math.abs(parsedInputtedTime - parsedCurrentTime); 
+
+                if (isDST(new Date())) {
+                    // DST is 1 hour ahead of server time 
+                    minutes += 60; 
+                }
 
                 message.reply('to AB to ' + hour + ':' + minute + ', load '+ minutes + ' minutes of AB. you could\'ve calculated that yourself, dimwit.'); 
             } 
@@ -47,4 +52,16 @@ module.exports = {
     		sendError('the command is `' + prefix + 'calc HH:MM`.');
     	}
 	}
+}
+
+// https://stackoverflow.com/a/11888430
+function stdTimezoneOffset() {
+    let year = new Date().getFullYear();
+    var jan = new Date(year, 0, 1);
+    var jul = new Date(year, 6, 1);
+    return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+}
+
+function isDST(date) {
+    return date.getTimezoneOffset() < stdTimezoneOffset();
 }
