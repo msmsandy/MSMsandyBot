@@ -4,14 +4,14 @@ They said I was a bot, so here I am.
 
 ## Setup 
 
-# Install 
+### Install 
 
 ```
 brew install npm 
 npm install 
 ```
 
-# .env 
+### .env 
 
 There should be a `.env` in the root folder. 
 
@@ -26,7 +26,7 @@ MONGODB_SERVER=
 MONGODB_USER=
 ```
 
-# Run 
+### Run 
 
 ```
 ./run 
