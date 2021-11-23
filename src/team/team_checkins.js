@@ -44,10 +44,10 @@ async function checkin(message, args, isOther) {
 		if (isUpdate) {
 			msg = `already checked into \`${teamId}\``;
 			if (checkinText.length > 0) {
-				msg += `, with \`${checkinText}\``;
+				msg += `, now checked in with \`${checkinText}\``;
 			}
 			else {
-				msg += `, no description`;
+				msg += `, now checked in with no description`;
 			}
 		}
 		const embed = await view(message, teamId);
