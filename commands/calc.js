@@ -24,7 +24,8 @@ module.exports = {
             let minute = splitTime[1]
 
             if (!isNaN(hour) && !isNaN(minute) && hour < 24 && minute < 60) {
-                let currentTime = moment().tz('America/Los_Angeles').format('HH:mm'); 
+                let timezone = 'America/Los_Angeles';
+                let currentTime = moment().tz(timezone).format('HH:mm'); 
 
                 let parsedInputtedTime = parseTime(args[0]); 
                 let parsedCurrentTime = parseTime(currentTime); 
@@ -34,7 +35,7 @@ module.exports = {
                 } 
                 let minutes = Math.abs(parsedInputtedTime - parsedCurrentTime); 
 
-                if (isDST(new Date())) {
+                if (isDSTNowIn(timezone)) {
                     // DST is 1 hour ahead of server time 
                     minutes += 60; 
                 }
@@ -54,14 +55,6 @@ module.exports = {
 	}
 }
 
-// https://stackoverflow.com/a/11888430
-function stdTimezoneOffset() {
-    let year = new Date().getFullYear();
-    var jan = new Date(year, 0, 1);
-    var jul = new Date(year, 6, 1);
-    return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
-}
-
-function isDST(date) {
-    return date.getTimezoneOffset() < stdTimezoneOffset();
+function isDSTNowIn(timezone) {
+    return moment().tz(timezone).isDST();
 }
