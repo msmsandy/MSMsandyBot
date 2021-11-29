@@ -1,5 +1,6 @@
-const { getHelpEmbed } = require('../src/help/help_format');
 const { abtix } = require('../src/calc/calc_abtix');
+
+const { getHelpEmbed } = require('../src/help/help_format');
 
 const argumentType = {
 	abtix: {
