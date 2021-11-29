@@ -36,6 +36,9 @@ client.on('message', async (message) => {
     	if (command === 'calc') {
             client.commands.get('calc').execute(message, prefix, command, args);
     	}
+        else if (command === 'calc2') {
+            client.commands.get('calc2').execute(message, prefix, args);
+        }
         else if (command === 'imdabest') {
             await client.commands.get('imdabest').execute(message);
         }
