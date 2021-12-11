@@ -43,6 +43,7 @@ function abtix(message, args) {
 		}
 
 		let embed = new Discord.MessageEmbed()
+			.setColor('#7ed3f2')
 			.setTitle(title)
 			.setDescription(description); 
 
