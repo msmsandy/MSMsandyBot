@@ -125,24 +125,46 @@ async function clear(message, args) {
 		return;
 	}
 
-	try {
-		let filter; 
-		if (arg === clearType.here) {
-			filter = team => team.channel === message.channel.id; 
-		}
-		else {
-			filter = team => team.id.toLowerCase() === arg.toLowerCase(); 
-		}
-
-		const teams = await clearTeam(message.guild.id, filter);
-		const msg = `team${teams.length > 1 ? 's' : ''} cleared`; 
-		message.channel.send(msg);
-	} catch (err) {
-		if (err === TeamError.TEAM_DOES_NOT_EXIST) {
-			throw { key: err, teamId: arg }; 
-		}
-		else {
-			throw err; 
+	if (arg === 'here') {
+		await view(message, 'here'); 
+		await message.reply(`do you really wish to clear the teams in this channel?\nreply with 'yes' to clear`);
+		let responseFilter = m => m.author.id === message.author.id;
+		let responseMessage = await message.channel.awaitMessages(responseFilter, {
+	        max: 1,
+	        time: 30000,
+	        errors: ['time']
+	    });
+	    responseMessage = responseMessage.first();
+	    if (responseMessage.content === 'yes') {
+	    	try {
+	    		let filter = team => team.channel === message.channel.id; 
+	    		const teams = await clearTeam(message.guild.id, filter);
+	    		const msg = `team${teams.length > 1 ? 's' : ''} cleared`; 
+	    		message.channel.send(msg);
+	    	} catch (err) {
+	    		if (err === TeamError.TEAM_DOES_NOT_EXIST) {
+	    			throw { key: err, teamId: arg }; 
+	    		}
+	    		else {
+	    			throw err; 
+	    		}
+	    	}
+	    } else {
+	    	message.channel.send(`u didnt say 'yes' so teams not cleared`);
+	    }
+	} else {
+		try {
+			let filter = team => team.id.toLowerCase() === arg.toLowerCase(); 
+			const teams = await clearTeam(message.guild.id, filter);
+			const msg = `team${teams.length > 1 ? 's' : ''} cleared`; 
+			message.channel.send(msg);
+		} catch (err) {
+			if (err === TeamError.TEAM_DOES_NOT_EXIST) {
+				throw { key: err, teamId: arg }; 
+			}
+			else {
+				throw err; 
+			}
 		}
 	}
 }
