@@ -4,9 +4,6 @@ const keep_alive = require('./keep_alive.js');
 require('dotenv').config(); 
 const express = require('express');
 
-const app = express();
-app.use('/healthcheck', require('./healthcheck'));
-
 // bot client 
 const client = new Discord.Client(); 
 client.commands = new Discord.Collection();
@@ -86,3 +83,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // login 
 client.login(process.env.BOT_TOKEN);
+
+// healthcheck
+const app = express();
+app.use('/healthcheck', require('./healthcheck'));
