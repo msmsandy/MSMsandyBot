@@ -86,4 +86,6 @@ client.login(process.env.BOT_TOKEN);
 
 // healthcheck
 const app = express();
-app.use('/healthcheck', require('./healthcheck'));
+//app.use('/healthcheck', require('./healthcheck'));
+app.get('/healthcheck', (req, res) => res.send('Hello World!'));
+
