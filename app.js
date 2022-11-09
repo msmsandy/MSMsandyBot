@@ -93,6 +93,7 @@ const express = require('express');
 const app = express(); 
 const router = express.Router()
 router.get('/', function (req, res, next) {
+    console.log('health check');
     res.json({status: 'UP'});
  });
 app.use("/healthcheck", router);
