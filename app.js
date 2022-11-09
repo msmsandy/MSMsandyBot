@@ -92,8 +92,9 @@ client.login(process.env.BOT_TOKEN);
 const express = require('express');
 const app = express(); 
 const router = express.Router()
-app.get('*', (request, response, next) => { response.send('Hello there!') });
 app.use('/healthcheck', require('./healthcheck'));
+app.get('*', (request, response, next) => { response.send('Hello there!') });
+
 // router.get('/', function (req, res, next) {
 //     console.log('health check');
 //     res.json({status: 'UP'});
