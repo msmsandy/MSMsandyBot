@@ -92,7 +92,7 @@ client.login(process.env.BOT_TOKEN);
 const express = require('express');
 const app = express(); 
 const router = express.Router()
-app.use('/healthcheck', require('./healthcheck'));
+app.get('/healthcheck', (req, res) => res.send('HEALTHCHECK!'));
 app.get('*', (request, response, next) => { response.send('Hello there!') });
 app.listen(1337, () => console.log('Web Server running on port 1337'));
 
