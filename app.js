@@ -2,6 +2,10 @@ const fs = require('fs');
 const Discord = require('discord.js'); 
 const keep_alive = require('./keep_alive.js');
 require('dotenv').config(); 
+const express = require('express');
+
+const app = express();
+app.use('/healthcheck', require('./healthcheck'));
 
 // bot client 
 const client = new Discord.Client(); 
