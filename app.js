@@ -94,6 +94,7 @@ const app = express();
 const router = express.Router()
 app.use('/healthcheck', require('./healthcheck'));
 app.get('*', (request, response, next) => { response.send('Hello there!') });
+app.listen(1337, () => console.log('Web Server running on port 1337'));
 
 // router.get('/', function (req, res, next) {
 //     console.log('health check');
