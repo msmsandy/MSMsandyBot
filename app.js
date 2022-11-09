@@ -102,4 +102,7 @@ router.get('/', function (req, res, next) {
  });
 app.use("/healthcheck", router);
 
+app.listen(3000, () => {
+  console.log(`Example app listening on port ${port}`)
+})
 
