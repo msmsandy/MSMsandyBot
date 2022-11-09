@@ -2,7 +2,7 @@ const fs = require('fs');
 const Discord = require('discord.js'); 
 const keep_alive = require('./keep_alive.js');
 require('dotenv').config(); 
-const express = require('express');
+
 
 // bot client 
 const client = new Discord.Client(); 
@@ -85,7 +85,16 @@ process.on('unhandledRejection', (reason, promise) => {
 client.login(process.env.BOT_TOKEN);
 
 // healthcheck
-const app = express();
-//app.use('/healthcheck', require('./healthcheck'));
-app.get('/healthcheck', (req, res) => res.send('Hello World!'));
+// const app = express();
+// //app.use('/healthcheck', require('./healthcheck'));
+// app.get('/healthcheck', (req, res) => res.send('Hello World!'));
+
+const express = require('express');
+const app = express(); 
+const router = express.Router()
+router.get('/', function (req, res, next) {
+    res.json({status: 'UP'});
+ });
+app.use("/health", router);
+
 
