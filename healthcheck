@@ -8,8 +8,10 @@ router.get('/', async (_req, res, _next) => {
         timestamp: Date.now()
     };
     try {
+        console.log("sending healthcheck: " + healthcheck);
         res.send(healthcheck);
     } catch (error) {
+        console.log("healthcheck error: " + error);
         healthcheck.message = error;
         res.status(503).send();
     }
