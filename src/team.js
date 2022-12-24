@@ -205,8 +205,10 @@ async function checkoutTeam(guildId, teamId, user, number) {
 				const index = number - 1; 
 				// find index and delete 
 				if (0 <= index && index < team.checkins.length) {
+					const checkin = team.checkins[index];
 					team.checkins.splice(index, 1); 
 					await teamList.save();
+					return checkin;
 				} 
 				else {
 					throw TeamError.CHECKOUT_INVALID_INDEX; 
