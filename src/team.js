@@ -165,9 +165,10 @@ async function checkinTeam(guildId, teamId, user, checkinText, isOther) {
 
 			// if user already self check in, update description 
 			if (userSelfCheckin && !isOther) {
+				const oldCheckinText =  userSelfCheckin.checkinText;
 				userSelfCheckin.checkinText = checkinText; 
 				await teamList.save();
-				return true;
+				return {isUpdate: true, oldCheckinText: oldCheckinText};
 			}
 			else if (team.checkins.length < team.slots) {
 				const checkin = Checkin({
@@ -178,7 +179,7 @@ async function checkinTeam(guildId, teamId, user, checkinText, isOther) {
 				team.checkins.push(checkin);
 
 				await teamList.save();
-				return false;
+				return {isUpdate: false, oldCheckinText: undefined};
 			}
 			else {
 				throw TeamError.TEAM_FULL; 
@@ -218,7 +219,7 @@ async function checkoutTeam(guildId, teamId, user, number) {
 					const checkinIndex = team.checkins.findIndex(selfCheckinFilter); 
 					team.checkins.splice(checkinIndex, 1);
 					await teamList.save();
-					return; 
+					return userSelfCheckin; 
 				}
 
 				// find all user checkins 

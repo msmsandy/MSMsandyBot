@@ -120,7 +120,7 @@ async function getTeamsEmbed(guild, filter = null, sortFunction = null, title, d
 			teams = teams.filter(filter);
 		}
 		if (sortFunction) {
-			console.log("sorted" + teams);
+			// console.log("sorted" + teams);
 			teams.sort(sortFunction);
 		}
 

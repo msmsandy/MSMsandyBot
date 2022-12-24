@@ -38,16 +38,16 @@ async function checkin(message, args, isOther) {
 	const checkinText = args.join(' ').trim();
 
 	try {
-		const isUpdate = await checkinTeam(message.guild.id, teamId, user, checkinText, isOther);
+		const {isUpdate, oldCheckinText} = await checkinTeam(message.guild.id, teamId, user, checkinText, isOther);
 
 		let msg = `successfully checked into \`${teamId}\``;
 		if (isUpdate) {
-			msg = `you were already checked into \`${teamId}\`, description: `;
+			msg = `you were already checked into \`${teamId}\``;
 			if (checkinText.length > 0) {
-				msg += `\`${checkinText}\``;
+				msg += `, updated description ${oldCheckinText ? `from \`${oldCheckinText}\` ` : ""}to \`${checkinText}\``;
 			}
-			else {
-				msg += `none`;
+			else if (oldCheckinText.length > 0) {
+				msg += `, removed description: \`${oldCheckinText}\``;
 			}
 		}
 		const embed = await view(message, teamId);
@@ -87,9 +87,11 @@ async function checkout(message, args) {
 	}
 
 	try {
-		await checkoutTeam(message.guild.id, teamId, message.author.id, checkoutNumber); 
-
-		const msg = `checked out of \`${teamId}\``;
+		const checkedOutCheckin = await checkoutTeam(message.guild.id, teamId, message.author.id, checkoutNumber); 
+		let msg = `checked out of \`${teamId}\``;
+		if (checkedOutCheckin.checkinText) {
+			msg += `, description was: \`${checkedOutCheckin.checkinText}\``;
+		}
 		const embed = await view(message, teamId);
 		message.channel.send(msg, { embed: embed });
 	} catch (err) {
